@@ -1,0 +1,16 @@
+{
+  "name": "kuto-caisse",
+  "version": "1.0.0",
+  "description": "Feuille de caisse KÜTO — plateforme (iPad + admin)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.11.5"
+  }
+}

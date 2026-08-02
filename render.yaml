@@ -1,0 +1,23 @@
+# Blueprint Render — déploiement automatique de la plateforme KÜTO
+# Dans Render : New + → Blueprint → sélectionne ce dépôt.
+services:
+  - type: web
+    name: kuto-caisse
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      # Chaîne de connexion PostgreSQL (Neon, Supabase, ou Render Postgres).
+      # À coller manuellement dans le tableau de bord Render (onglet Environment).
+      - key: DATABASE_URL
+        sync: false
+      # Mot de passe admin initial — mets-en un fort ici (tu pourras le changer dans l'app).
+      - key: INITIAL_ADMIN_PASSWORD
+        sync: false
+      # NIP initial de l'iPad (modifiable ensuite dans l'app).
+      - key: INITIAL_PIN
+        value: "1234"
+      # Secret de session, généré automatiquement.
+      - key: SESSION_SECRET
+        generateValue: true
