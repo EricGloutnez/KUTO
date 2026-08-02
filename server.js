@@ -39,17 +39,21 @@ function readBody(req){
   });
 }
 
-const TYPES = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon' };
+// Sert l'application (index.html), qu'il soit dans public/ ou à la racine du dépôt.
 function serveStatic(req, res){
-  let p = decodeURIComponent(url.parse(req.url).pathname);
-  if (p === '/') p = '/index.html';
-  const file = path.join(PUBLIC, path.normalize(p).replace(/^(\.\.[\/\\])+/, ''));
-  if (!file.startsWith(PUBLIC)) { res.writeHead(403); return res.end('Forbidden'); }
-  fs.readFile(file, (err, buf) => {
-    if (err){ res.writeHead(404); return res.end('Not found'); }
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
-    res.end(buf);
-  });
+  const candidates = [
+    path.join(PUBLIC, 'index.html'),
+    path.join(__dirname, 'index.html')
+  ];
+  for (const f of candidates){
+    try {
+      const buf = fs.readFileSync(f);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(buf);
+    } catch(e){ /* essaie le prochain */ }
+  }
+  res.writeHead(404);
+  res.end('index.html introuvable');
 }
 
 // ---------- Valeurs initiales ----------
@@ -118,6 +122,11 @@ async function handleApi(req, res, pathname, query){
       if (!b || !b.id) return send(res, 400, { error: 'Feuille invalide' });
       return send(res, 200, await store.upsertSheet(b));
     }
+  }
+  if (pathname.startsWith('/api/sheets/') && req.method === 'DELETE'){
+    if (!adminOk) return send(res, 401, { error: 'Admin' });
+    await store.deleteSheet(decodeURIComponent(pathname.split('/').pop()));
+    return send(res, 200, { ok: true });
   }
 
   if (pathname === '/api/health') return send(res, 200, { ok: true });
