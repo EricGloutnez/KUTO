@@ -931,6 +931,7 @@
   async function afterLogin(){
     document.getElementById('appHeader').style.display = '';
     await syncPull();
+    await loadPool();
     await loadSchedule();
     switchScreen('accueil');
   }
@@ -996,6 +997,7 @@
   // ---- Accueil : serveurs présents (horaire Presto + failsafe) ----
   let present = [];        // [{name, id?, time, checked, source:'schedule'|'manual'}]
   let scheduleList = [];   // horaire brut de la date choisie
+  let pool = [];           // bassin failsafe : personnes Service + managers (Presto)
 
   function findRosterId(name){
     const r = roster.find(x => (x.name || '').toLowerCase() === String(name).toLowerCase());
@@ -1046,12 +1048,17 @@
     const box = document.getElementById('failsafeRow');
     if (!box) return;
     const used = new Set(present.map(p => (p.name || '').toLowerCase()));
-    const opts = roster.filter(r => !used.has((r.name || '').toLowerCase()));
+    const source = (pool && pool.length) ? pool.slice() : roster.map(r => r.name);
+    const opts = source.filter(n => n && !used.has(n.toLowerCase())).sort((a, b) => a.localeCompare(b));
     box.innerHTML =
       '<select class="fs-select" onchange="addFailsafe(this.value); this.selectedIndex=0;">' +
       '<option value="">+ Ajouter un serveur hors horaire…</option>' +
-      opts.map(r => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`).join('') +
+      opts.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('') +
       '</select>';
+  }
+
+  async function loadPool(){
+    try { pool = (await api('/api/presto/pool')) || []; } catch(e){ pool = []; }
   }
 
   function addFailsafe(name){
@@ -1097,12 +1104,14 @@
     try {
       const r = await api('/api/presto/sync', { method: 'POST', body: { email, password } });
       closePresto();
+      await loadPool();
       await loadSchedule();
       const btn = document.getElementById('prestoSyncBtn');
       if (btn){
         const n = r.servers ? r.servers.length : 0;
-        btn.textContent = '✓ Horaire à jour (' + n + ' serveurs)';
-        setTimeout(() => { btn.textContent = 'Synchroniser l\'horaire (Presto)'; }, 2500);
+        const m = (typeof r.pool === 'number') ? r.pool : (pool ? pool.length : 0);
+        btn.textContent = '✓ Horaire à jour (' + n + ' serveurs · ' + m + ' au bassin)';
+        setTimeout(() => { btn.textContent = 'Synchroniser l\'horaire (Presto)'; }, 3500);
       }
     } catch(e){
       const s = String(e);

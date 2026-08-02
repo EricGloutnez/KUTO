@@ -21,7 +21,7 @@ const PRESTO = {
 function prestoTime(hms){ if (!hms) return ''; const p = String(hms).split(':'); return p[0] + 'h' + (p[1] || '00'); }
 function prestoIso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 
-// Se connecte à Presto avec courriel+mot de passe, récupère les quarts « Service » de Dix30
+// Se connecte à Presto ; retourne { days: horaire Service par date, pool: toutes les personnes Service + managers }
 async function prestoSync(email, password){
   const authRes = await fetch(PRESTO.url + '/auth/v1/token?grant_type=password', {
     method: 'POST',
@@ -29,34 +29,51 @@ async function prestoSync(email, password){
     body: JSON.stringify({ email: email, password: password })
   });
   if (!authRes.ok){ const e = new Error('auth'); e.code = 401; throw e; }
-  const auth = await authRes.json();
-  const token = auth.access_token;
+  const token = (await authRes.json()).access_token;
   if (!token){ const e = new Error('auth'); e.code = 401; throw e; }
   const H = { apikey: PRESTO.anon, Authorization: 'Bearer ' + token };
 
   const today = new Date();
-  const start = new Date(today); start.setDate(today.getDate() - 7);
-  const end = new Date(today); end.setDate(today.getDate() + 21);
-  const sUrl = PRESTO.url + '/rest/v1/shifts?select=employee_id,date,start_time,end_time,position'
-    + '&restaurant_id=eq.' + PRESTO.restaurant
-    + '&date=gte.' + prestoIso(start) + '&date=lte.' + prestoIso(end);
-  const shifts = await (await fetch(sUrl, { headers: H })).json();
-  const service = (Array.isArray(shifts) ? shifts : []).filter(s => /service/i.test(s.position || ''));
+  const mk = o => { const d = new Date(today); d.setDate(today.getDate() + o); return prestoIso(d); };
+  const isService = p => /service/i.test(p || '');
 
-  const ids = [...new Set(service.map(s => s.employee_id).filter(Boolean))];
+  // Horaire (fenêtre proche) — quarts Service
+  const schedUrl = PRESTO.url + '/rest/v1/shifts?select=employee_id,date,start_time,end_time,position'
+    + '&restaurant_id=eq.' + PRESTO.restaurant + '&date=gte.' + mk(-7) + '&date=lte.' + mk(30);
+  const schedRaw = await (await fetch(schedUrl, { headers: H })).json();
+  const sched = (Array.isArray(schedRaw) ? schedRaw : []).filter(s => isService(s.position));
+
+  // Bassin (fenêtre large) — toutes les personnes qui ont des quarts Service
+  const poolUrl = PRESTO.url + '/rest/v1/shifts?select=employee_id,position'
+    + '&restaurant_id=eq.' + PRESTO.restaurant + '&date=gte.' + mk(-120) + '&date=lte.' + mk(30);
+  const poolRaw = await (await fetch(poolUrl, { headers: H })).json();
+  const poolIds = new Set((Array.isArray(poolRaw) ? poolRaw : []).filter(s => isService(s.position)).map(s => s.employee_id).filter(Boolean));
+
+  // + les managers (rôle)
+  try {
+    const rolesUrl = PRESTO.url + '/rest/v1/user_roles?select=user_id&restaurant_id=eq.' + PRESTO.restaurant + '&role=eq.manager';
+    const roles = await (await fetch(rolesUrl, { headers: H })).json();
+    (Array.isArray(roles) ? roles : []).forEach(r => { if (r.user_id) poolIds.add(r.user_id); });
+  } catch(e){}
+
+  // Noms (union horaire + bassin)
+  const allIds = new Set([...poolIds]);
+  sched.forEach(s => { if (s.employee_id) allIds.add(s.employee_id); });
   const names = {};
-  if (ids.length){
-    const pUrl = PRESTO.url + '/rest/v1/profiles?select=user_id,full_name&user_id=in.(' + ids.join(',') + ')';
+  const idArr = [...allIds];
+  if (idArr.length){
+    const pUrl = PRESTO.url + '/rest/v1/profiles?select=user_id,full_name&user_id=in.(' + idArr.join(',') + ')';
     const profs = await (await fetch(pUrl, { headers: H })).json();
     (Array.isArray(profs) ? profs : []).forEach(p => { names[p.user_id] = p.full_name; });
   }
 
   const days = {};
-  service.forEach(s => {
+  sched.forEach(s => {
     const nm = names[s.employee_id] || 'Employé';
     (days[s.date] = days[s.date] || []).push({ name: nm, time: prestoTime(s.start_time) + '–' + prestoTime(s.end_time) });
   });
-  return days;
+  const pool = [...poolIds].map(id => names[id]).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  return { days: days, pool: pool };
 }
 
 // ---------- Utilitaires ----------
@@ -197,17 +214,22 @@ async function handleApi(req, res, pathname, query){
     if (!pinOk) return send(res, 401, { error: 'PIN' });
     return send(res, 200, { email: cfg.presto_email || '' });
   }
+  if (pathname === '/api/presto/pool' && req.method === 'GET'){
+    if (!pinOk) return send(res, 401, { error: 'PIN' });
+    let p = []; try { p = JSON.parse(cfg.presto_pool || '[]'); } catch(e){}
+    return send(res, 200, p);
+  }
   if (pathname === '/api/presto/sync' && req.method === 'POST'){
     if (!pinOk) return send(res, 401, { error: 'PIN' });
     const b = await readBody(req);
     const email = (b.email || '').trim(), password = b.password || '';
     if (!email || !password) return send(res, 400, { error: 'Courriel et mot de passe requis' });
     try {
-      const days = await prestoSync(email, password);
-      await store.setSchedule(days);
-      await store.setConfig({ presto_email: email });   // mémorise l'identifiant seulement
-      const names = [...new Set(Object.values(days).flat().map(x => x.name))];
-      return send(res, 200, { ok: true, dates: Object.keys(days).length, servers: names });
+      const result = await prestoSync(email, password);
+      await store.setSchedule(result.days);
+      await store.setConfig({ presto_email: email, presto_pool: JSON.stringify(result.pool || []) });
+      const names = [...new Set(Object.values(result.days).flat().map(x => x.name))];
+      return send(res, 200, { ok: true, dates: Object.keys(result.days).length, servers: names, pool: (result.pool || []).length });
     } catch(e){
       if (e && e.code === 401) return send(res, 401, { error: 'Identifiants Presto invalides' });
       console.error('Presto sync:', e && e.message);
@@ -215,7 +237,7 @@ async function handleApi(req, res, pathname, query){
     }
   }
 
-  if (pathname === '/api/health') return send(res, 200, { ok: true });
+  if (pathname === '/api/health') return send(res, 200, { ok: true, build: 'pool-2026-08-02' });
   return send(res, 404, { error: 'Route inconnue' });
 }
 
