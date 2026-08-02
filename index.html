@@ -120,6 +120,13 @@
   .srv .del:active { background: #f1f1ee; }
   .empty-hint { color: var(--muted); font-size: 15px; padding: 8px 4px 4px; }
   .srv-time { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .mini-sync {
+    font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .3px; color: var(--muted);
+    background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer;
+    text-transform: none;
+  }
+  .mini-sync:active { background: #f1f1ee; }
+  .mini-sync:disabled { opacity: .6; }
   .fs-row { margin-top: 14px; }
   .fs-select {
     width: 100%; font-size: 16px; font-weight: 600; padding: 14px 16px; border: 1.5px dashed var(--line);
@@ -423,7 +430,10 @@
     </div>
 
     <div class="card">
-      <div class="label">Serveurs présents pendant le quart</div>
+      <div class="label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Serveurs présents pendant le quart</span>
+        <button type="button" id="syncBtn" class="mini-sync" onclick="openPrestoModal()">↻ Synchro</button>
+      </div>
       <div id="serverList"></div>
       <div id="failsafeRow" class="fs-row"></div>
     </div>
@@ -724,6 +734,28 @@
     <p class="footnote">Étape 6 sur 6 — validation et enregistrement.</p>
   </section>
 
+</div>
+
+<!-- ===================== MODAL SYNCHRO PRESTO ===================== -->
+<div id="prestoModal" class="modal">
+  <div class="modal-card">
+    <div class="confirm-q">Synchroniser l'horaire (Presto)</div>
+    <div class="confirm-total" style="margin-top:4px">Ton mot de passe n'est pas conservé.</div>
+    <div style="margin-top:14px">
+      <div class="label">Courriel Presto</div>
+      <input type="email" id="prestoEmail" autocomplete="username" placeholder="courriel@exemple.com"
+             style="width:100%;font-size:17px;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;-webkit-appearance:none;margin-top:4px">
+      <div class="label" style="margin-top:12px">Mot de passe Presto</div>
+      <input type="password" id="prestoPass" autocomplete="current-password" placeholder="Mot de passe"
+             style="width:100%;font-size:17px;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;-webkit-appearance:none;margin-top:4px"
+             onkeydown="if(event.key==='Enter'){doPrestoSync();}">
+    </div>
+    <div id="prestoMsg" class="pw-err" style="min-height:18px"></div>
+    <div class="modal-btns">
+      <button type="button" onclick="closePresto()">Annuler</button>
+      <button type="button" class="primary" id="prestoGo" onclick="doPrestoSync()">Synchroniser</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===================== MODAL SUPPRIMER UNE FEUILLE ===================== -->
@@ -1032,6 +1064,52 @@
   }
   function togglePresent(i){ if (present[i]){ present[i].checked = !present[i].checked; updateStart(); } }
   function removePresent(i){ present.splice(i, 1); renderPresent(); updateStart(); }
+
+  async function refreshSchedule(){
+    const btn = document.getElementById('syncBtn');
+    if (btn){ btn.disabled = true; btn.textContent = '…'; }
+    await syncPull();
+    await loadSchedule();
+    if (btn){
+      btn.textContent = '✓ à jour';
+      setTimeout(() => { btn.textContent = '↻ Synchro'; btn.disabled = false; }, 1400);
+    }
+  }
+
+  // ---- Synchronisation Presto (connexion → récupération de l'horaire) ----
+  async function openPrestoModal(){
+    document.getElementById('prestoMsg').textContent = '';
+    document.getElementById('prestoPass').value = '';
+    try { const r = await api('/api/presto/email'); document.getElementById('prestoEmail').value = r.email || ''; } catch(e){}
+    document.getElementById('prestoModal').classList.add('show');
+    setTimeout(() => {
+      const em = document.getElementById('prestoEmail');
+      (em.value ? document.getElementById('prestoPass') : em).focus();
+    }, 120);
+  }
+  function closePresto(){ document.getElementById('prestoModal').classList.remove('show'); }
+  async function doPrestoSync(){
+    const email = (document.getElementById('prestoEmail').value || '').trim();
+    const password = document.getElementById('prestoPass').value || '';
+    const msg = document.getElementById('prestoMsg');
+    const go = document.getElementById('prestoGo');
+    if (!email || !password){ msg.style.color = 'var(--accent)'; msg.textContent = 'Entre ton courriel et ton mot de passe.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Connexion à Presto…';
+    if (go){ go.disabled = true; go.textContent = '…'; }
+    try {
+      const r = await api('/api/presto/sync', { method: 'POST', body: { email, password } });
+      closePresto();
+      await loadSchedule();
+      const btn = document.getElementById('syncBtn');
+      if (btn){ btn.textContent = '✓ ' + (r.servers ? r.servers.length : '') + ' serveurs'; setTimeout(() => { btn.textContent = '↻ Synchro'; }, 1800); }
+    } catch(e){
+      const s = String(e);
+      msg.style.color = 'var(--accent)';
+      msg.textContent = s.includes('401') ? 'Courriel ou mot de passe Presto incorrect.' : 'Échec de la synchronisation. Réessaie.';
+    } finally {
+      if (go){ go.disabled = false; go.textContent = 'Synchroniser'; }
+    }
+  }
 
   // Liste de gestion dans les paramètres (avec suppression)
   function renderAdminServers(){

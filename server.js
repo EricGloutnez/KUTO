@@ -12,6 +12,53 @@ const PUBLIC = path.join(__dirname, 'public');
 const SECRET = process.env.SESSION_SECRET || 'kuto-secret-change-me';
 const SYNC_KEY = process.env.SYNC_KEY || 'kuto-sync';
 
+// --- Intégration Presto (app Supabase) — clé publique, adresse et restaurant Dix30 ---
+const PRESTO = {
+  url: process.env.PRESTO_URL || 'https://pzezuaqltyfyowlwlgue.supabase.co',
+  anon: process.env.PRESTO_ANON || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6ZXp1YXFsdHlmeW93bHdsZ3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTQ2MTUsImV4cCI6MjA4NDkzMDYxNX0.HsDdgoT80H2RGSiC3GdiSj6WPe0qaMCr9MsaZyGcdqs',
+  restaurant: process.env.PRESTO_RESTAURANT || 'e5d2fbcc-6e96-4202-8ae5-9c5ef2aa691a'
+};
+function prestoTime(hms){ if (!hms) return ''; const p = String(hms).split(':'); return p[0] + 'h' + (p[1] || '00'); }
+function prestoIso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+// Se connecte à Presto avec courriel+mot de passe, récupère les quarts « Service » de Dix30
+async function prestoSync(email, password){
+  const authRes = await fetch(PRESTO.url + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': PRESTO.anon, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  });
+  if (!authRes.ok){ const e = new Error('auth'); e.code = 401; throw e; }
+  const auth = await authRes.json();
+  const token = auth.access_token;
+  if (!token){ const e = new Error('auth'); e.code = 401; throw e; }
+  const H = { apikey: PRESTO.anon, Authorization: 'Bearer ' + token };
+
+  const today = new Date();
+  const start = new Date(today); start.setDate(today.getDate() - 7);
+  const end = new Date(today); end.setDate(today.getDate() + 21);
+  const sUrl = PRESTO.url + '/rest/v1/shifts?select=employee_id,date,start_time,end_time,position'
+    + '&restaurant_id=eq.' + PRESTO.restaurant
+    + '&date=gte.' + prestoIso(start) + '&date=lte.' + prestoIso(end);
+  const shifts = await (await fetch(sUrl, { headers: H })).json();
+  const service = (Array.isArray(shifts) ? shifts : []).filter(s => /service/i.test(s.position || ''));
+
+  const ids = [...new Set(service.map(s => s.employee_id).filter(Boolean))];
+  const names = {};
+  if (ids.length){
+    const pUrl = PRESTO.url + '/rest/v1/profiles?select=user_id,full_name&user_id=in.(' + ids.join(',') + ')';
+    const profs = await (await fetch(pUrl, { headers: H })).json();
+    (Array.isArray(profs) ? profs : []).forEach(p => { names[p.user_id] = p.full_name; });
+  }
+
+  const days = {};
+  service.forEach(s => {
+    const nm = names[s.employee_id] || 'Employé';
+    (days[s.date] = days[s.date] || []).push({ name: nm, time: prestoTime(s.start_time) + '–' + prestoTime(s.end_time) });
+  });
+  return days;
+}
+
 // ---------- Utilitaires ----------
 function adminToken(){ return crypto.createHmac('sha256', SECRET).update('admin-v1').digest('hex'); }
 
@@ -142,6 +189,29 @@ async function handleApi(req, res, pathname, query){
       if (!b || !b.days || typeof b.days !== 'object') return send(res, 400, { error: 'Format invalide (attendu { days: {date: [...] } })' });
       await store.setSchedule(b.days);
       return send(res, 200, { ok: true, dates: Object.keys(b.days).length });
+    }
+  }
+
+  // Synchronisation Presto (le mot de passe n'est jamais conservé ; l'identifiant, oui)
+  if (pathname === '/api/presto/email' && req.method === 'GET'){
+    if (!pinOk) return send(res, 401, { error: 'PIN' });
+    return send(res, 200, { email: cfg.presto_email || '' });
+  }
+  if (pathname === '/api/presto/sync' && req.method === 'POST'){
+    if (!pinOk) return send(res, 401, { error: 'PIN' });
+    const b = await readBody(req);
+    const email = (b.email || '').trim(), password = b.password || '';
+    if (!email || !password) return send(res, 400, { error: 'Courriel et mot de passe requis' });
+    try {
+      const days = await prestoSync(email, password);
+      await store.setSchedule(days);
+      await store.setConfig({ presto_email: email });   // mémorise l'identifiant seulement
+      const names = [...new Set(Object.values(days).flat().map(x => x.name))];
+      return send(res, 200, { ok: true, dates: Object.keys(days).length, servers: names });
+    } catch(e){
+      if (e && e.code === 401) return send(res, 401, { error: 'Identifiants Presto invalides' });
+      console.error('Presto sync:', e && e.message);
+      return send(res, 500, { error: 'Échec de la synchronisation Presto' });
     }
   }
 
