@@ -43,11 +43,24 @@ async function prestoSync(email, password){
   const schedRaw = await (await fetch(schedUrl, { headers: H })).json();
   const sched = (Array.isArray(schedRaw) ? schedRaw : []).filter(s => isService(s.position));
 
-  // Bassin (fenêtre large) — toutes les personnes qui ont des quarts Service
-  const poolUrl = PRESTO.url + '/rest/v1/shifts?select=employee_id,position'
-    + '&restaurant_id=eq.' + PRESTO.restaurant + '&date=gte.' + mk(-120) + '&date=lte.' + mk(30);
-  const poolRaw = await (await fetch(poolUrl, { headers: H })).json();
-  const poolIds = new Set((Array.isArray(poolRaw) ? poolRaw : []).filter(s => isService(s.position)).map(s => s.employee_id).filter(Boolean));
+  // Le bassin part TOUJOURS des personnes Service récentes de l'horaire (fiable),
+  // puis on tente de l'élargir avec une fenêtre plus large.
+  const poolIds = new Set();
+  sched.forEach(s => { if (s.employee_id) poolIds.add(s.employee_id); });
+
+  // Bassin (fenêtre large) — toutes les personnes qui ont eu des quarts Service.
+  // On essaie 120 j, puis on retombe sur 45 j si la grande requête échoue/est vide.
+  async function fetchPoolShifts(days){
+    const url = PRESTO.url + '/rest/v1/shifts?select=employee_id,position'
+      + '&restaurant_id=eq.' + PRESTO.restaurant + '&date=gte.' + mk(-days) + '&date=lte.' + mk(30);
+    try {
+      const raw = await (await fetch(url, { headers: H })).json();
+      return Array.isArray(raw) ? raw : [];
+    } catch(e){ return []; }
+  }
+  let poolRaw = await fetchPoolShifts(120);
+  if (!poolRaw.length) poolRaw = await fetchPoolShifts(45);
+  poolRaw.filter(s => isService(s.position)).forEach(s => { if (s.employee_id) poolIds.add(s.employee_id); });
 
   // + les managers (rôle)
   try {
@@ -56,15 +69,15 @@ async function prestoSync(email, password){
     (Array.isArray(roles) ? roles : []).forEach(r => { if (r.user_id) poolIds.add(r.user_id); });
   } catch(e){}
 
-  // Noms (union horaire + bassin)
-  const allIds = new Set([...poolIds]);
-  sched.forEach(s => { if (s.employee_id) allIds.add(s.employee_id); });
+  // Noms (tout le bassin)
   const names = {};
-  const idArr = [...allIds];
+  const idArr = [...poolIds];
   if (idArr.length){
     const pUrl = PRESTO.url + '/rest/v1/profiles?select=user_id,full_name&user_id=in.(' + idArr.join(',') + ')';
-    const profs = await (await fetch(pUrl, { headers: H })).json();
-    (Array.isArray(profs) ? profs : []).forEach(p => { names[p.user_id] = p.full_name; });
+    try {
+      const profs = await (await fetch(pUrl, { headers: H })).json();
+      (Array.isArray(profs) ? profs : []).forEach(p => { names[p.user_id] = p.full_name; });
+    } catch(e){}
   }
 
   const days = {};
@@ -73,6 +86,7 @@ async function prestoSync(email, password){
     (days[s.date] = days[s.date] || []).push({ name: nm, time: prestoTime(s.start_time) + '–' + prestoTime(s.end_time) });
   });
   const pool = [...poolIds].map(id => names[id]).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  console.log('Presto sync: horaire=' + sched.length + ' quarts, bassin=' + pool.length + ' personnes');
   return { days: days, pool: pool };
 }
 
