@@ -277,6 +277,15 @@
     border: 1.5px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; cursor: pointer; text-align: left;
   }
   .hist-chip:active { background: #f1f1ee; }
+  .hist-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .hist-svc { font-size: 16px; font-weight: 600; }
+  .hist-acts { display: flex; gap: 8px; }
+  .hist-view, .hist-del {
+    font-family: inherit; font-size: 14px; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--line); background: #fff;
+  }
+  .hist-view { color: var(--ink); }
+  .hist-del { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .hist-view:active { background: #f1f1ee; }
   .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
   .week-nav button {
     font-family: inherit; font-size: 22px; font-weight: 800; width: 52px; height: 52px;
@@ -1597,11 +1606,17 @@
     const wrap = document.getElementById('historyList');
     if (!dates.length){ wrap.innerHTML = '<div class="empty-hint">Aucune feuille enregistrée pour l\'instant.</div>'; return; }
     wrap.innerHTML = dates.map(d => {
-      const items = byDate[d].map(s => {
+      const rows = byDate[d].map(s => {
         const label = s.service === 'midi' ? 'Midi' : 'Soir';
-        return `<button type="button" class="hist-chip" onclick="viewSheet('${s.id}')">${label} · pourboire ${money(s.totalPourboire)}</button>`;
+        return `<div class="hist-row">
+          <span class="hist-svc">${label} · ${money(s.totalPourboire)}</span>
+          <span class="hist-acts">
+            <button type="button" class="hist-view" onclick="viewSheet('${s.id}')">Consulter</button>
+            <button type="button" class="hist-del" onclick="askDeleteSheet('${s.id}')">Supprimer</button>
+          </span>
+        </div>`;
       }).join('');
-      return `<div class="card hist-card"><div class="hist-date">${formatDate(d)}</div><div class="hist-chips">${items}</div></div>`;
+      return `<div class="card hist-card"><div class="hist-date">${formatDate(d)}</div>${rows}</div>`;
     }).join('');
   }
 
@@ -1615,12 +1630,18 @@
   }
 
   // ---- Suppression d'une feuille (admin) ----
-  function askDeleteSheet(){ document.getElementById('deleteModal').classList.add('show'); }
+  let pendingDeleteId = null;
+  function askDeleteSheet(id){
+    pendingDeleteId = id || viewedSheetId;
+    document.getElementById('deleteModal').classList.add('show');
+  }
   function closeDelete(){ document.getElementById('deleteModal').classList.remove('show'); }
   async function doDeleteSheet(){
+    if (!pendingDeleteId){ closeDelete(); return; }
     try {
-      await api('/api/sheets/' + encodeURIComponent(viewedSheetId), { method: 'DELETE', admin: true });
-      saveSheets(getSheets().filter(s => s.id !== viewedSheetId));
+      await api('/api/sheets/' + encodeURIComponent(pendingDeleteId), { method: 'DELETE', admin: true });
+      saveSheets(getSheets().filter(s => s.id !== pendingDeleteId));
+      pendingDeleteId = null;
       closeDelete();
       renderHistory();
       switchScreen('history');
