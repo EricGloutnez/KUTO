@@ -628,10 +628,23 @@
     <p class="footnote">Étape 3 sur 6 — calcul.</p>
   </section>
 
+  <!-- ===================== HEURES (répartition à plusieurs) ===================== -->
+  <section id="heures" class="screen">
+    <div class="topbar">
+      <button class="back" onclick="switchScreen('etape3')">‹ Retour</button>
+      <div class="context"><div class="s">Heures</div></div>
+    </div>
+    <h2 class="section-title">Heures travaillées</h2>
+    <p class="section-sub">Entre les heures de chaque serveur, puis confirme pour répartir le pourboire.</p>
+    <div class="total-box"><span class="t">Pourboire à répartir</span><span class="v" id="hPourboire">0,00 $</span></div>
+    <div id="hoursServers" style="margin-top:16px"></div>
+    <button class="btn-primary" style="margin-top:20px" onclick="confirmHours()">Confirmer les heures ›</button>
+  </section>
+
   <!-- ===================== RETRAIT DU POURBOIRE ===================== -->
   <section id="retrait" class="screen">
     <div class="topbar">
-      <button class="back" onclick="switchScreen('etape3')">‹ Retour</button>
+      <button class="back" onclick="backFromRetrait()">‹ Retour</button>
       <div class="context">
         <div class="d" id="ctxDateRt">—</div>
         <div class="s" id="ctxServiceRt">—</div>
@@ -1139,7 +1152,7 @@
     if (kpMode === 'hours') neg = false;   // pas de négatif pour les heures
     activeInput.value = body ? (neg ? '-' : '') + body + suffix : (neg ? '-' : '');
     if (kpMode === 'money' && activeInput.id === 'retourInput') recalcCascade();
-    if (activeInput.dataset.role) recomputeRetrait();
+    if (activeInput.dataset.role === 'taken') recomputeRetrait();
   }
 
   function parseMoney(s){
@@ -1375,7 +1388,7 @@
     }
   }
 
-  // ---- Écran de retrait du pourboire ----
+  // ---- Retrait : à plusieurs, on demande les heures d'abord (page dédiée) ----
   function goRetrait(){
     document.getElementById('ctxDateRt').textContent = document.getElementById('ctxDate').textContent;
     document.getElementById('ctxServiceRt').textContent = document.getElementById('ctxService').textContent;
@@ -1391,35 +1404,83 @@
       note.style.display = 'none';
     }
 
+    const soirCount = currentSheet.servers.filter(s => !s.carryover).length;
+    if (soirCount > 1){
+      renderHoursPage();
+      switchScreen('heures');
+    } else {
+      computeOwed();
+      renderRetraitServers();
+      switchScreen('retrait');
+    }
+  }
+
+  function backFromRetrait(){
+    closeKeypad();
+    const soirCount = currentSheet ? currentSheet.servers.filter(s => !s.carryover).length : 0;
+    switchScreen(soirCount > 1 ? 'heures' : 'etape3');
+  }
+
+  // Page 1 (à plusieurs) : saisie des heures
+  function renderHoursPage(){
+    document.getElementById('hPourboire').textContent = money(currentSheet.totalPourboire);
+    const wrap = document.getElementById('hoursServers');
+    wrap.innerHTML = '';
+    currentSheet.servers.forEach((s, i) => {
+      if (s.carryover) return;
+      const card = document.createElement('div');
+      card.className = 'card scard';
+      card.innerHTML = `
+        <div class="scard-row" style="border:none;padding:2px 0">
+          <span class="scard-name" style="margin:0">${escapeHtml(s.name)}</span>
+          <input class="miniqty" type="text" inputmode="none" readonly placeholder="0 h"
+                 data-mode="hours" data-role="hours" data-si="${i}" data-label="${escapeHtml(s.name)} — heures" onclick="openKeypad(this)">
+        </div>`;
+      wrap.appendChild(card);
+    });
+  }
+
+  function confirmHours(){
+    closeKeypad();
+    currentSheet.servers.forEach((s, i) => {
+      if (s.carryover){ s.hours = 0; return; }
+      const h = document.querySelector('#hoursServers [data-role="hours"][data-si="' + i + '"]');
+      s.hours = h ? parseMoney(h.value) : 0;
+    });
+    computeOwed();
     renderRetraitServers();
     switchScreen('retrait');
   }
 
-  // Une carte par serveur : heures (→ pourboire dû) + montant pris en comptant
+  function formatH(n){ return (Math.round(n * 100) / 100).toLocaleString('fr-CA'); }
+
+  // Calcule le pourboire dû de chacun (soir = selon heures ; report du midi = reste fixe)
+  function computeOwed(){
+    const soirServers = currentSheet.servers.filter(s => !s.carryover);
+    if (soirServers.length > 1){
+      const w = soirServers.map(s => s.hours || 0);
+      const wsum = w.reduce((a, b) => a + b, 0);
+      const arr = splitAmount(currentSheet.totalPourboire, wsum > 0 ? w : soirServers.map(() => 1));
+      let j = 0;
+      currentSheet.servers.forEach(s => { if (!s.carryover) s.owed = arr[j++]; });
+    } else if (soirServers.length === 1){
+      soirServers[0].owed = currentSheet.totalPourboire;
+    }
+    currentSheet.servers.forEach(s => { if (s.carryover) s.owed = s.midiReste; });
+  }
+
+  // Page 2 : répartition — pourboire dû (calculé) + montant pris en comptant
   function renderRetraitServers(){
     const wrap = document.getElementById('rtServers');
-    const soirCount = currentSheet.servers.filter(s => !s.carryover).length;
-    const multi = soirCount > 1;
     wrap.innerHTML = '';
     currentSheet.servers.forEach((s, i) => {
       const card = document.createElement('div');
       card.className = 'card scard' + (s.carryover ? ' scard-midi' : '');
-      let hoursRow = '', owedRow;
-      if (s.carryover){
-        owedRow = `<div class="scard-row"><span class="scard-l">Pourboire du midi (reporté)</span><b class="scard-owed" id="owed-${i}">0,00 $</b></div>`;
-      } else {
-        hoursRow = multi ? `
-          <div class="scard-row">
-            <span class="scard-l">Heures travaillées</span>
-            <input class="miniqty" type="text" inputmode="none" readonly placeholder="0 h"
-                   data-mode="hours" data-role="hours" data-si="${i}" data-label="${escapeHtml(s.name)} — heures" onclick="openKeypad(this)">
-          </div>` : '';
-        owedRow = `<div class="scard-row"><span class="scard-l">Pourboire ${multi ? '(selon heures)' : ''}</span><b class="scard-owed" id="owed-${i}">0,00 $</b></div>`;
-      }
+      const hoursTag = (!s.carryover && s.hours) ? ` <span class="scard-tag" style="background:var(--muted)">${formatH(s.hours)} h</span>` : '';
+      const owedLabel = s.carryover ? 'Pourboire du midi (reporté)' : 'Pourboire';
       card.innerHTML = `
-        <div class="scard-name">${escapeHtml(s.name)}${s.carryover ? ' <span class="scard-tag">midi</span>' : ''}</div>
-        ${hoursRow}
-        ${owedRow}
+        <div class="scard-name">${escapeHtml(s.name)}${s.carryover ? ' <span class="scard-tag">midi</span>' : ''}${hoursTag}</div>
+        <div class="scard-row"><span class="scard-l">${owedLabel}</span><b class="scard-owed" id="owed-${i}">0,00 $</b></div>
         <div class="scard-row">
           <span class="scard-l">Pris en comptant</span>
           <input class="miniqty" type="text" inputmode="none" readonly placeholder="0,00 $"
@@ -1451,31 +1512,7 @@
 
   function recomputeRetrait(){
     if (!currentSheet) return;
-    const soirServers = currentSheet.servers.filter(s => !s.carryover);
-    const multi = soirServers.length > 1;
-
-    // Heures des serveurs du soir
-    currentSheet.servers.forEach((s, i) => {
-      if (s.carryover){ s.hours = 0; return; }
-      if (multi){
-        const h = document.querySelector(`[data-role="hours"][data-si="${i}"]`);
-        s.hours = h ? parseMoney(h.value) : 0;
-      } else { s.hours = 0; }
-    });
-
-    // Pourboire dû : soir = réparti selon les heures ; report du midi = reste fixe
-    if (multi){
-      const w = soirServers.map(s => s.hours || 0);
-      const wsum = w.reduce((a, b) => a + b, 0);
-      const arr = splitAmount(currentSheet.totalPourboire, wsum > 0 ? w : soirServers.map(() => 1));
-      let j = 0;
-      currentSheet.servers.forEach(s => { if (!s.carryover) s.owed = arr[j++]; });
-    } else if (soirServers.length === 1){
-      soirServers[0].owed = currentSheet.totalPourboire;
-    }
-    currentSheet.servers.forEach(s => { if (s.carryover) s.owed = s.midiReste; });
-
-    // Montant pris en comptant → reste à payer
+    // Le pourboire dû (owed) est déjà calculé par computeOwed(). Ici : montant pris → reste.
     let takenSum = 0;
     currentSheet.servers.forEach((s, i) => {
       const t = document.querySelector(`[data-role="taken"][data-si="${i}"]`);
