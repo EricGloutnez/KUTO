@@ -342,6 +342,7 @@
   }
   .kp-grid button:active { background: #e2e2dd; }
   .kp-grid button.kp-act { background: var(--accent-soft); color: var(--accent); font-size: 26px; }
+  .kp-grid button.kp-ok { background: var(--ink); color: #fff; font-size: 22px; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -469,6 +470,8 @@
       <div class="context"><div class="s">Feuille</div></div>
     </div>
     <div id="sheetViewBody" class="rapport"></div>
+    <button class="btn-primary" style="margin-top:18px" onclick="emailSheet()">Envoyer par courriel</button>
+    <button class="btn-primary" style="margin-top:12px;background:var(--accent)" onclick="askDeleteSheet()">Supprimer la feuille</button>
   </section>
 
   <!-- ===================== RAPPORT HEBDOMADAIRE ===================== -->
@@ -484,6 +487,7 @@
       <button type="button" onclick="changeWeek(1)">›</button>
     </div>
     <div id="weeklyBody"></div>
+    <button class="btn-primary" style="margin-top:16px" onclick="emailWeekly()">Envoyer par courriel</button>
   </section>
 
   <!-- ===================== RAPPORT PERSONNALISÉ ===================== -->
@@ -506,6 +510,7 @@
     </div>
     <button class="btn-primary" onclick="generateCustom()">Générer le rapport</button>
     <div id="customBody" style="margin-top:20px"></div>
+    <button class="btn-primary" style="margin-top:12px" onclick="emailCustom()">Envoyer par courriel</button>
   </section>
 
   <!-- ===================== ÉCRAN SAISIE ===================== -->
@@ -689,6 +694,18 @@
 
 </div>
 
+<!-- ===================== MODAL SUPPRIMER UNE FEUILLE ===================== -->
+<div id="deleteModal" class="modal">
+  <div class="modal-card">
+    <div class="confirm-q">Supprimer cette feuille&nbsp;?</div>
+    <div class="confirm-total">Cette action est définitive.</div>
+    <div class="modal-btns">
+      <button type="button" onclick="closeDelete()">Annuler</button>
+      <button type="button" class="primary" style="background:var(--accent);border-color:var(--accent)" onclick="doDeleteSheet()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== MODAL CONFIRMATION SERVEUR MIDI NON PAYÉ ===================== -->
 <div id="carryModal" class="modal">
   <div class="modal-card">
@@ -745,7 +762,7 @@
     <div class="kp-lbl" id="kpLabel">—</div>
     <div class="kp-head-btns">
       <button type="button" id="kpSign" class="kp-sign" onclick="keySign()">± négatif</button>
-      <button type="button" class="kp-done" onclick="closeKeypad()">OK</button>
+      <button type="button" class="kp-done" onclick="keyPress('del')">⌫</button>
     </div>
   </div>
   <div class="kp-grid">
@@ -760,7 +777,7 @@
     <button type="button" onclick="keyPress('9')">9</button>
     <button type="button" class="kp-act" id="kpAlt" onclick="keyAlt()">C</button>
     <button type="button" onclick="keyPress('0')">0</button>
-    <button type="button" class="kp-act" onclick="keyPress('del')">⌫</button>
+    <button type="button" class="kp-ok" onclick="okNext()">OK</button>
   </div>
 </div>
 
@@ -1059,6 +1076,16 @@
     activeInput = null;
     document.getElementById('keypad').classList.remove('show');
     document.body.classList.remove('keypad-open');
+  }
+
+  // OK : passe au champ suivant du même écran ; ferme si c'était le dernier
+  function okNext(){
+    if (!activeInput){ closeKeypad(); return; }
+    const screen = activeInput.closest('.screen');
+    const fields = screen ? Array.from(screen.querySelectorAll('input[readonly][inputmode="none"]')) : [];
+    const idx = fields.indexOf(activeInput);
+    if (idx >= 0 && idx < fields.length - 1) openKeypad(fields[idx + 1]);
+    else closeKeypad();
   }
 
   function keyAlt(){
@@ -1578,11 +1605,87 @@
     }).join('');
   }
 
+  let viewedSheetId = null;
   function viewSheet(id){
     const s = getSheets().find(x => x.id === id);
     if (!s) return;
+    viewedSheetId = id;
     document.getElementById('sheetViewBody').innerHTML = buildReportHTML(s);
     switchScreen('sheetView');
+  }
+
+  // ---- Suppression d'une feuille (admin) ----
+  function askDeleteSheet(){ document.getElementById('deleteModal').classList.add('show'); }
+  function closeDelete(){ document.getElementById('deleteModal').classList.remove('show'); }
+  async function doDeleteSheet(){
+    try {
+      await api('/api/sheets/' + encodeURIComponent(viewedSheetId), { method: 'DELETE', admin: true });
+      saveSheets(getSheets().filter(s => s.id !== viewedSheetId));
+      closeDelete();
+      renderHistory();
+      switchScreen('history');
+    } catch(e){ closeDelete(); }
+  }
+
+  // ---- Envoi par courriel (ouvre l'app courriel de l'appareil) ----
+  function mailto(subject, body){
+    window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+  function sheetToText(s){
+    const svc = s.service === 'midi' ? 'Midi' : 'Soir';
+    const L = [];
+    L.push('KÜTO — Feuille de caisse ' + svc + ' — ' + formatDate(s.date));
+    L.push('');
+    L.push('Total de la caisse : ' + money(s.caisseTotal));
+    L.push('Retour comptant : ' + money(s.retourEntered));
+    if (s.midiRetour) L.push('Retour comptant du midi (retiré) : ' + money(s.midiRetour));
+    L.push('Total pourboire : ' + money(s.totalPourboire));
+    const depotVal = (s.actualDepot != null) ? s.actualDepot : s.depot;
+    if (depotVal > 0) L.push('Dépôt à effectuer : ' + money(depotVal));
+    const rok = Math.abs((s.recountTotal || 0) - CAISSE_FLOAT) < 0.005;
+    L.push('Recompte : ' + money(s.recountTotal || 0) + (rok ? ' (OK)' : ' (écart)'));
+    L.push('');
+    L.push('Répartition des pourboires :');
+    s.servers.forEach(sv => {
+      L.push('- ' + sv.name + (sv.carryover ? ' (midi)' : '') + ' : dû ' + money(sv.owed || 0) + ', pris ' + money(sv.taken || 0) + ', reste ' + money(sv.reste || 0));
+    });
+    if (s.carryDecline) L.push('Note : pourboire du midi de ' + (s.carryDecline.servers || []).join(', ') + ' non payé en entier (confirmé).');
+    if (Array.isArray(s.notes)) s.notes.forEach(n => L.push('Note : ' + n));
+    return L.join('\n');
+  }
+  function emailSheet(){
+    const s = getSheets().find(x => x.id === viewedSheetId);
+    if (!s) return;
+    mailto('KÜTO — Caisse ' + (s.service === 'midi' ? 'midi' : 'soir') + ' ' + s.date, sheetToText(s));
+  }
+
+  function unpaidToText(byServer, title){
+    const names = Object.keys(byServer).sort();
+    const L = ['KÜTO — ' + title, ''];
+    let grand = 0;
+    if (!names.length){ L.push('Aucun pourboire non payé.'); return L.join('\n'); }
+    names.forEach(n => {
+      const g = byServer[n]; grand += g.total;
+      L.push(n + ' : ' + money(g.total));
+      g.entries.sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
+        L.push('   ' + formatDate(e.date) + ' — ' + (e.service === 'midi' ? 'Midi' : 'Soir') + ' : ' + money(e.amount));
+      });
+    });
+    L.push(''); L.push('Total : ' + money(grand));
+    return L.join('\n');
+  }
+  function emailWeekly(){
+    const { start, end } = weekRange(weekOffset);
+    const by = aggregateUnpaid(getSheets().filter(s => s.date >= start && s.date <= end), null);
+    mailto('KÜTO — Pourboires non payés (semaine)', unpaidToText(by, 'Pourboires non payés — du ' + formatDate(start) + ' au ' + formatDate(end)));
+  }
+  function emailCustom(){
+    const start = document.getElementById('custStart').value;
+    const end = document.getElementById('custEnd').value;
+    const checked = Array.from(document.querySelectorAll('#custServers input:checked')).map(i => i.value);
+    const allowed = checked.length ? new Set(checked) : null;
+    const by = aggregateUnpaid(getSheets().filter(s => (!start || s.date >= start) && (!end || s.date <= end)), allowed);
+    mailto('KÜTO — Pourboires non payés', unpaidToText(by, 'Pourboires non payés — du ' + formatDate(start) + ' au ' + formatDate(end)));
   }
 
   // ---- Administration : rapport hebdomadaire des pourboires non payés ----
