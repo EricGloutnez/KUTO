@@ -81,5 +81,8 @@ module.exports = {
       [sheet.id, sheet.date, sheet.service, JSON.stringify(sheet)]
     );
     return sheet;
+  },
+  async deleteSheet(id){
+    await pool.query('DELETE FROM sheets WHERE id = $1', [id]);
   }
 };

@@ -47,5 +47,9 @@ module.exports = {
     if (i >= 0) data.sheets[i] = sheet; else data.sheets.push(sheet);
     persist();
     return sheet;
+  },
+  async deleteSheet(id){
+    data.sheets = data.sheets.filter(s => s.id !== id);
+    persist();
   }
 };
