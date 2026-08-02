@@ -1639,30 +1639,39 @@
     document.getElementById('deleteModal').classList.remove('show');
     const m = document.getElementById('delErr'); if (m) m.textContent = '';
   }
+  function delFail(txt){
+    let m = document.getElementById('delErr');
+    if (!m){
+      m = document.createElement('div'); m.id = 'delErr'; m.className = 'pw-err'; m.style.marginTop = '10px';
+      const mb = document.querySelector('#deleteModal .modal-btns');
+      mb.parentNode.insertBefore(m, mb);
+    }
+    m.textContent = txt;
+  }
   async function doDeleteSheet(){
     if (!pendingDeleteId){ closeDelete(); return; }
     const id = pendingDeleteId;
     const btn = document.getElementById('delConfirmBtn');
     if (btn){ btn.disabled = true; btn.textContent = 'Suppression…'; }
     try {
-      if (!adminTok) throw new Error('API 401');
-      await api('/api/sheets/' + encodeURIComponent(id), { method: 'DELETE', admin: true });
-      await syncPull();                       // recharge la liste réelle du serveur
+      if (!adminTok){ delFail('Connexion admin absente — ferme, touche ⚙ et reconnecte-toi en admin.'); return; }
+      let res;
+      try {
+        res = await fetch('/api/sheets/' + encodeURIComponent(id), { method: 'DELETE', headers: { 'x-admin-token': adminTok } });
+      } catch(net){
+        delFail('Pas de connexion au serveur. Réessaie dans un instant.');
+        return;
+      }
+      if (res.status === 401){ delFail('Connexion admin expirée — ferme, touche ⚙, reconnecte-toi, puis réessaie.'); return; }
+      if (!res.ok){ delFail('Erreur du serveur (code ' + res.status + '). Réessaie.'); return; }
+      await syncPull();  // recharge la liste réelle depuis le serveur
+      if (getSheets().some(s => s.id === id)){
+        delFail('Le serveur a répondu OK mais la feuille est toujours là. Copie-moi ce message.');
+        return;
+      }
       pendingDeleteId = null;
       closeDelete();
       renderHistory();
-    } catch(e){
-      const s = String(e);
-      const msg = s.includes('401')
-        ? 'Session admin expirée. Ferme, touche ⚙, reconnecte-toi en admin, puis réessaie.'
-        : 'Échec de la suppression (' + s.replace('Error: ', '') + '). Vérifie ta connexion (le serveur gratuit peut mettre ~30 s à se réveiller) et réessaie.';
-      let m = document.getElementById('delErr');
-      if (!m){
-        m = document.createElement('div'); m.id = 'delErr'; m.className = 'pw-err'; m.style.marginTop = '10px';
-        const mb = document.querySelector('#deleteModal .modal-btns');
-        mb.parentNode.insertBefore(m, mb);
-      }
-      m.textContent = msg;
     } finally {
       if (btn){ btn.disabled = false; btn.textContent = 'Supprimer'; }
     }
