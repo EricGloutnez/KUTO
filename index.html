@@ -119,6 +119,15 @@
   }
   .srv .del:active { background: #f1f1ee; }
   .empty-hint { color: var(--muted); font-size: 15px; padding: 8px 4px 4px; }
+  .srv-time { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .fs-row { margin-top: 14px; }
+  .fs-select {
+    width: 100%; font-size: 16px; font-weight: 600; padding: 14px 16px; border: 1.5px dashed var(--line);
+    border-radius: 12px; background: #fff; color: var(--ink); font-family: inherit; -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a76' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+  }
+  .fs-select:focus { outline: none; border-color: var(--accent); }
   .add-row { display: flex; gap: 10px; margin-top: 16px; }
   .add-row input {
     flex: 1; font-size: 18px; padding: 14px 16px; border: 1.5px solid var(--line);
@@ -416,6 +425,7 @@
     <div class="card">
       <div class="label">Serveurs présents pendant le quart</div>
       <div id="serverList"></div>
+      <div id="failsafeRow" class="fs-row"></div>
     </div>
 
     <button id="startBtn" class="btn-primary" disabled onclick="startSaisie()">Commencer</button>
@@ -891,7 +901,7 @@
   async function afterLogin(){
     document.getElementById('appHeader').style.display = '';
     await syncPull();
-    renderServers();
+    await loadSchedule();
     switchScreen('accueil');
   }
 
@@ -901,6 +911,7 @@
     const t = new Date();
     const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
     document.getElementById('dateInput').value = iso;
+    document.getElementById('dateInput').addEventListener('change', loadSchedule);
     try { appPin = localStorage.getItem('kuto_pin') || ''; adminTok = localStorage.getItem('kuto_admin_tok') || ''; } catch(e){}
     if (appPin){
       try { await api('/api/roster'); await afterLogin(); return; } catch(e){ appPin = ''; }
@@ -952,25 +963,75 @@
     try { localStorage.setItem('kuto_roster', JSON.stringify(roster)); } catch(e){}
   }
 
-  // Liste cochable sur l'accueil (pas de suppression ici)
-  function renderServers(){
+  // ---- Accueil : serveurs présents (horaire Presto + failsafe) ----
+  let present = [];        // [{name, id?, time, checked, source:'schedule'|'manual'}]
+  let scheduleList = [];   // horaire brut de la date choisie
+
+  function findRosterId(name){
+    const r = roster.find(x => (x.name || '').toLowerCase() === String(name).toLowerCase());
+    return r ? r.id : null;
+  }
+
+  async function loadSchedule(){
+    const date = document.getElementById('dateInput').value;
+    scheduleList = [];
+    try { scheduleList = (await api('/api/schedule?date=' + encodeURIComponent(date))) || []; }
+    catch(e){ scheduleList = []; }
+    // Un même employé peut avoir plusieurs quarts : on dédoublonne par nom
+    const seen = new Set();
+    present = [];
+    scheduleList.forEach(s => {
+      const key = (s.name || '').toLowerCase();
+      if (!s.name || seen.has(key)) return;
+      seen.add(key);
+      present.push({ name: s.name, time: s.time || '', id: findRosterId(s.name), checked: true, source: 'schedule' });
+    });
+    renderPresent();
+    updateStart();
+  }
+
+  function renderPresent(){
     const list = document.getElementById('serverList');
     list.innerHTML = '';
-    if (roster.length === 0){
-      list.innerHTML = '<div class="empty-hint">Aucun serveur enregistré. Ajoute-les dans les paramètres&nbsp;⚙.</div>';
-      return;
+    if (!present.length){
+      list.innerHTML = '<div class="empty-hint">Aucun serveur à l\'horaire pour cette date. Ajoute-les ci-dessous.</div>';
+    } else {
+      present.forEach((p, i) => {
+        const row = document.createElement('div');
+        row.className = 'srv';
+        const tag = p.source === 'manual' ? ' <span class="scard-tag" style="background:var(--muted)">hors horaire</span>' : '';
+        const time = p.time ? ` <span class="srv-time">${escapeHtml(p.time)}</span>` : '';
+        row.innerHTML = `
+          <input type="checkbox" ${p.checked ? 'checked' : ''} onchange="togglePresent(${i})">
+          <span class="nm">${escapeHtml(p.name)}${time}${tag}</span>
+          ${p.source === 'manual' ? `<button type="button" class="del" onclick="removePresent(${i})" aria-label="Retirer">×</button>` : ''}
+        `;
+        list.appendChild(row);
+      });
     }
-    roster.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'srv';
-      const checked = selected.has(r.id) ? 'checked' : '';
-      row.innerHTML = `
-        <input type="checkbox" id="srv-${r.id}" ${checked} onchange="toggleServer(${r.id})">
-        <label class="nm" for="srv-${r.id}">${escapeHtml(r.name)}</label>
-      `;
-      list.appendChild(row);
-    });
+    renderFailsafe();
   }
+
+  function renderFailsafe(){
+    const box = document.getElementById('failsafeRow');
+    if (!box) return;
+    const used = new Set(present.map(p => (p.name || '').toLowerCase()));
+    const opts = roster.filter(r => !used.has((r.name || '').toLowerCase()));
+    box.innerHTML =
+      '<select class="fs-select" onchange="addFailsafe(this.value); this.selectedIndex=0;">' +
+      '<option value="">+ Ajouter un serveur hors horaire…</option>' +
+      opts.map(r => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`).join('') +
+      '</select>';
+  }
+
+  function addFailsafe(name){
+    if (!name) return;
+    present.push({ name: name, id: findRosterId(name), time: '', checked: true, source: 'manual' });
+    renderPresent();
+    updateStart();
+  }
+  function togglePresent(i){ if (present[i]){ present[i].checked = !present[i].checked; updateStart(); } }
+  function removePresent(i){ present.splice(i, 1); renderPresent(); updateStart(); }
 
   // Liste de gestion dans les paramètres (avec suppression)
   function renderAdminServers(){
@@ -1000,7 +1061,7 @@
       roster.push({ id: item.id, name: item.name });
       inp.value = '';
       renderAdminServers();
-      renderServers();
+      renderFailsafe();
       inp.focus();
     } catch(e){ console.error('Ajout serveur impossible', e); }
   }
@@ -1009,9 +1070,8 @@
     try {
       await api('/api/roster/' + id, { method: 'DELETE', admin: true });
       roster = roster.filter(r => r.id !== id);
-      selected.delete(id);
       renderAdminServers();
-      renderServers();
+      renderFailsafe();
       updateStart();
     } catch(e){ console.error('Retrait serveur impossible', e); }
   }
@@ -1042,14 +1102,8 @@
   }
   function closeSettings(){ switchScreen('accueil'); }
 
-  function toggleServer(id){
-    if (selected.has(id)) selected.delete(id);
-    else selected.add(id);
-    updateStart();
-  }
-
   function updateStart(){
-    const ok = !!service && selected.size >= 1;
+    const ok = !!service && present.some(p => p.checked);
     document.getElementById('startBtn').disabled = !ok;
   }
 
@@ -1059,7 +1113,7 @@
 
   function startSaisie(){
     const d = document.getElementById('dateInput').value;
-    shiftServers = roster.filter(r => selected.has(r.id)).map(r => ({ id: r.id, name: r.name }));
+    shiftServers = present.filter(p => p.checked).map(p => ({ id: p.id, name: p.name }));
     document.getElementById('ctxDate').textContent = formatDate(d);
     const n = shiftServers.length;
     document.getElementById('ctxService').textContent =

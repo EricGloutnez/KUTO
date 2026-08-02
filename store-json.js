@@ -12,6 +12,7 @@ function load(){
   if (!data.config) data.config = {};
   if (!Array.isArray(data.servers)) data.servers = [];
   if (!Array.isArray(data.sheets)) data.sheets = [];
+  if (!data.schedule || typeof data.schedule !== 'object') data.schedule = {};
 }
 function persist(){ fs.writeFileSync(FILE, JSON.stringify(data, null, 2)); }
 
@@ -51,5 +52,15 @@ module.exports = {
   async deleteSheet(id){
     data.sheets = data.sheets.filter(s => s.id !== id);
     persist();
+  },
+
+  // Horaire (par date) importé de Presto
+  async setSchedule(days){
+    data.schedule = data.schedule || {};
+    Object.keys(days).forEach(d => { data.schedule[d] = days[d]; });
+    persist();
+  },
+  async getScheduleForDate(date){
+    return (data.schedule && data.schedule[date]) || [];
   }
 };

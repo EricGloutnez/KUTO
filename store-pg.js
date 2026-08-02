@@ -26,6 +26,10 @@ module.exports = {
         saved_at TIMESTAMPTZ DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_sheets_date ON sheets(date);
+      CREATE TABLE IF NOT EXISTS schedule (
+        date TEXT PRIMARY KEY,
+        data JSONB NOT NULL
+      );
     `);
   },
 
@@ -84,5 +88,20 @@ module.exports = {
   },
   async deleteSheet(id){
     await pool.query('DELETE FROM sheets WHERE id = $1', [id]);
+  },
+
+  // Horaire (par date) importé de Presto
+  async setSchedule(days){
+    for (const [d, list] of Object.entries(days)){
+      await pool.query(
+        `INSERT INTO schedule(date, data) VALUES($1, $2)
+         ON CONFLICT (date) DO UPDATE SET data = EXCLUDED.data`,
+        [d, JSON.stringify(list)]
+      );
+    }
+  },
+  async getScheduleForDate(date){
+    const r = await pool.query('SELECT data FROM schedule WHERE date = $1', [date]);
+    return r.rows.length ? r.rows[0].data : [];
   }
 };

@@ -10,6 +10,7 @@ const url = require('url');
 const store = process.env.DATABASE_URL ? require('./store-pg') : require('./store-json');
 const PUBLIC = path.join(__dirname, 'public');
 const SECRET = process.env.SESSION_SECRET || 'kuto-secret-change-me';
+const SYNC_KEY = process.env.SYNC_KEY || 'kuto-sync';
 
 // ---------- Utilitaires ----------
 function adminToken(){ return crypto.createHmac('sha256', SECRET).update('admin-v1').digest('hex'); }
@@ -129,11 +130,32 @@ async function handleApi(req, res, pathname, query){
     return send(res, 200, { ok: true });
   }
 
+  // Horaire (import Presto)
+  if (pathname === '/api/schedule'){
+    if (req.method === 'GET'){
+      if (!pinOk) return send(res, 401, { error: 'PIN' });
+      return send(res, 200, await store.getScheduleForDate(query.date));
+    }
+    if (req.method === 'POST'){
+      if ((req.headers['x-sync-key'] || '') !== SYNC_KEY) return send(res, 401, { error: 'Clé de synchro invalide' });
+      const b = await readBody(req);
+      if (!b || !b.days || typeof b.days !== 'object') return send(res, 400, { error: 'Format invalide (attendu { days: {date: [...] } })' });
+      await store.setSchedule(b.days);
+      return send(res, 200, { ok: true, dates: Object.keys(b.days).length });
+    }
+  }
+
   if (pathname === '/api/health') return send(res, 200, { ok: true });
   return send(res, 404, { error: 'Route inconnue' });
 }
 
 const server = http.createServer(async (req, res) => {
+  // CORS : permet au bookmarklet (sur le site de Presto) d'envoyer l'horaire
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-pin, x-admin-token, x-sync-key');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS'){ res.writeHead(204); return res.end(); }
+
   const parsed = url.parse(req.url, true);
   if (parsed.pathname.startsWith('/api/')){
     try { await handleApi(req, res, parsed.pathname, parsed.query); }
