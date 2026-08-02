@@ -1,2087 +1,1041 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Caisse KÜTO">
-<meta name="theme-color" content="#141414">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23141414'/%3E%3Ctext x='90' y='120' font-family='Arial,sans-serif' font-size='96' font-weight='800' fill='%23ffffff' text-anchor='middle'%3EK%3C/text%3E%3C/svg%3E">
-<title>Caisse KÜTO</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI-TIMING</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  :root {
-    --bg: #f4f4f2;
-    --ink: #141414;
-    --muted: #7a7a76;
-    --line: #e2e2dd;
-    --card: #ffffff;
-    --accent: #b8352b;
-    --accent-soft: #f7e7e5;
-    --ok: #1c7c4a;
-  }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    -webkit-text-size-adjust: 100%;
-  }
-  body { min-height: 100vh; padding-top: env(safe-area-inset-top); }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 22px 60px; }
-
-  /* ---- Header ---- */
-  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-  .brand .logo {
-    font-size: 34px; font-weight: 800; letter-spacing: 1px; line-height: 1;
-  }
-  .brand .sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  .page-title { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin: 2px 0 26px; }
-  .pin-wrap { max-width: 380px; margin: 24px auto 0; text-align: center; }
-  .pin-title { font-size: 16px; color: var(--muted); letter-spacing: 1px; margin: 16px 0 14px; }
-  .pin-dots { font-size: 26px; letter-spacing: 14px; color: var(--ink); padding-left: 14px; }
-  .pin-grid { position: static; max-width: 320px; margin: 8px auto 0; box-shadow: none; }
-  .header-row { display: flex; align-items: center; justify-content: space-between; }
-  .gear {
-    border: 1.5px solid var(--line); background: #fff; width: 50px; height: 50px;
-    border-radius: 14px; font-size: 24px; line-height: 1; cursor: pointer; color: var(--ink);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .gear:active { background: #f1f1ee; }
-
-  /* ---- Modal mot de passe ---- */
-  .modal {
-    position: fixed; inset: 0; background: rgba(20,20,20,.45); z-index: 100;
-    display: none; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal.show { display: flex; }
-  .modal-card { background: #fff; border-radius: 18px; padding: 24px; width: 100%; max-width: 360px; }
-  .modal-card .label { margin-bottom: 4px; }
-  .modal-card input {
-    width: 100%; font-size: 20px; padding: 15px 16px; border: 1.5px solid var(--line);
-    border-radius: 12px; font-family: inherit; color: var(--ink); margin-top: 6px;
-    -webkit-appearance: none; appearance: none;
-  }
-  .modal-card input:focus { outline: none; border-color: var(--accent); }
-  .pw-err { color: var(--accent); font-size: 14px; min-height: 18px; margin-top: 8px; }
-  .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
-  .modal-btns button {
-    flex: 1; font-family: inherit; font-size: 17px; font-weight: 700; padding: 14px;
-    border-radius: 12px; cursor: pointer; border: 1.5px solid var(--line); background: #fff; color: var(--ink);
-  }
-  .modal-btns button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-
-  /* ---- Screens ---- */
-  .screen { display: none; }
-  .screen.active { display: block; animation: fade .25s ease; }
-  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-  /* ---- Accueil ---- */
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
-    padding: 22px; margin-bottom: 20px;
-  }
-  .label { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
-  input[type="date"] {
-    width: 100%; font-size: 22px; padding: 16px 18px; border: 1.5px solid var(--line);
-    border-radius: 14px; background: #fff; color: var(--ink); font-family: inherit;
-    -webkit-appearance: none; appearance: none;
-  }
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .seg button {
-    font-family: inherit; font-size: 20px; font-weight: 700; padding: 26px 10px;
-    border: 1.5px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink);
-    cursor: pointer; transition: all .15s ease; display: flex; flex-direction: column; align-items: center; gap: 6px;
-  }
-  .seg button .ico { font-size: 30px; }
-  .seg button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-  .btn-primary {
-    width: 100%; font-family: inherit; font-size: 20px; font-weight: 700; letter-spacing: .5px;
-    padding: 20px; border: none; border-radius: 16px; background: var(--ink); color: #fff; cursor: pointer;
-    transition: opacity .15s ease;
-  }
-  .btn-primary:disabled { opacity: .3; cursor: default; }
-
-  /* ---- Liste des serveurs ---- */
-  .srv {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 4px; border-bottom: 1px solid var(--line);
-  }
-  .srv:last-of-type { border-bottom: none; }
-  .srv input[type="checkbox"] {
-    width: 28px; height: 28px; flex: 0 0 auto; accent-color: var(--accent); cursor: pointer;
-  }
-  .srv .nm { flex: 1; font-size: 19px; font-weight: 600; cursor: pointer; padding: 4px 0; }
-  .srv .del {
-    border: none; background: none; color: var(--muted); font-size: 24px;
-    line-height: 1; cursor: pointer; padding: 4px 10px; border-radius: 8px;
-  }
-  .srv .del:active { background: #f1f1ee; }
-  .empty-hint { color: var(--muted); font-size: 15px; padding: 8px 4px 4px; }
-  .srv-time { font-size: 13px; color: var(--muted); font-weight: 500; }
-  .mini-sync {
-    font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .3px; color: var(--muted);
-    background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer;
-    text-transform: none;
-  }
-  .mini-sync:active { background: #f1f1ee; }
-  .mini-sync:disabled { opacity: .6; }
-  .fs-row { margin-top: 14px; }
-  .fs-select {
-    width: 100%; font-size: 16px; font-weight: 600; padding: 14px 16px; border: 1.5px dashed var(--line);
-    border-radius: 12px; background: #fff; color: var(--ink); font-family: inherit; -webkit-appearance: none; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a76' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 16px center;
-  }
-  .fs-select:focus { outline: none; border-color: var(--accent); }
-  .add-row { display: flex; gap: 10px; margin-top: 16px; }
-  .add-row input {
-    flex: 1; font-size: 18px; padding: 14px 16px; border: 1.5px solid var(--line);
-    border-radius: 12px; font-family: inherit; color: var(--ink); background: #fff;
-    -webkit-appearance: none; appearance: none;
-  }
-  .add-row input:focus { outline: none; border-color: var(--accent); }
-  .add-row button {
-    font-family: inherit; font-size: 16px; font-weight: 700; padding: 0 22px;
-    border: 1.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 12px; cursor: pointer;
-  }
-  .add-row button:active { background: #f1f1ee; }
-
-  /* ---- Saisie ---- */
-  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; gap: 12px; }
-  .back {
-    font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 16px; border: 1.5px solid var(--line);
-    background: #fff; border-radius: 12px; cursor: pointer; color: var(--ink);
-  }
-  .context { text-align: right; }
-  .context .d { font-size: 18px; font-weight: 700; }
-  .context .s { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-weight: 700; }
-
-  .section-title { font-size: 18px; font-weight: 800; margin: 0 0 4px; }
-  .section-sub { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
-
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
-  .grid .col { display: flex; flex-direction: column; }
-  @media (max-width: 560px){ .grid { grid-template-columns: 1fr; gap: 0; } }
-
-  .row {
-    display: grid; grid-template-columns: 96px 20px 1fr; align-items: center; gap: 8px;
-    padding: 8px 0; border-bottom: 1px solid var(--line);
-  }
-  .row .qty {
-    width: 96px; font-size: 22px; font-weight: 700; text-align: center; padding: 12px 6px;
-    border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; color: var(--ink);
-    -webkit-appearance: none; appearance: none; background:#fff; cursor: pointer;
-  }
-  .row .qty:focus { outline: none; }
-  .row .qty.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .row .x { text-align: center; color: var(--muted); font-size: 15px; }
-  .row .den { font-size: 15px; color: var(--ink); }
-  .row .den b { font-weight: 700; }
-  .row .amt { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; text-align: right; }
-  .row .amt .z { color: var(--muted); font-weight: 400; }
-
-  .total-box {
-    margin-top: 22px; background: var(--ink); color: #fff; border-radius: 16px;
-    padding: 20px 22px; display: flex; align-items: center; justify-content: space-between;
-  }
-  .total-box .t { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: .8; }
-  .total-box .v { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
-
-  .footnote { text-align:center; font-size:12px; color:var(--muted); margin-top:26px; }
-
-  /* ---- Cascade de calcul ---- */
-  .casc {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 4px; border-bottom: 1px solid var(--line);
-  }
-  .casc:last-child { border-bottom: none; }
-  .casc-l { font-size: 16px; color: var(--ink); }
-  .casc-v { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 17px; }
-  .casc-v.neg { color: var(--accent); }
-  .casc-input .money {
-    width: 150px; text-align: right; font-size: 20px; font-weight: 700; padding: 12px 14px;
-    border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; color: var(--ink);
-    background: #fff; -webkit-appearance: none; appearance: none; cursor: pointer;
-  }
-  .casc-input .money.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-
-  /* ---- Confirmation ---- */
-  .confirm-q { font-size: 19px; font-weight: 800; color: var(--ink); text-align: center; }
-  .confirm-total { font-size: 15px; color: var(--muted); text-align: center; margin-top: 8px; }
-  .confirm-total b { color: var(--ink); font-weight: 800; }
-
-  /* ---- Pop-up ancré en haut (heures) ---- */
-  .modal-top { align-items: flex-start; }
-  .modal-top .modal-card { margin-top: 34px; max-width: 460px; max-height: 64vh; overflow-y: auto; }
-  .hrow {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 2px; border-bottom: 1px solid var(--line);
-  }
-  .hrow:last-child { border-bottom: none; }
-  .hrow .hnm { font-size: 17px; font-weight: 600; }
-  .hours {
-    width: 120px; text-align: right; font-size: 19px; font-weight: 700; padding: 12px;
-    border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; color: var(--ink);
-    background: #fff; cursor: pointer; -webkit-appearance: none; appearance: none;
-  }
-  .hours.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-
-  /* ---- Répartition affichée ---- */
-  .distro-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 15px 2px; border-bottom: 1px solid var(--line);
-  }
-  .distro-row:last-child { border-bottom: none; }
-  .distro-row .dn { font-size: 17px; font-weight: 700; }
-  .distro-row .dh { font-size: 13px; color: var(--muted); margin-left: 8px; font-weight: 400; }
-  .distro-row .da { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
-  .distro-row .da .due { display: block; font-size: 12px; font-weight: 600; color: var(--muted); }
-
-  /* ---- Cartes serveur (retrait) ---- */
-  .scard { padding: 18px 20px; }
-  .scard-name { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
-  .scard-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .scard-row:last-child { border-bottom: none; }
-  .scard-l { font-size: 15px; color: var(--muted); }
-  .scard-owed { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .scard-reste b { font-size: 18px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .miniqty {
-    width: 130px; text-align: right; font-size: 18px; font-weight: 700; padding: 11px 12px;
-    border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; color: var(--ink);
-    background: #fff; cursor: pointer; -webkit-appearance: none; appearance: none;
-  }
-  .miniqty.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .scard-midi { border-color: var(--accent); background: var(--accent-soft); }
-  .scard-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 7px; vertical-align: middle; }
-  .ra-note { margin-top: 14px; padding: 12px 14px; background: var(--accent-soft); color: var(--accent); border-radius: 12px; font-size: 13px; font-weight: 600; }
-
-  /* ---- Rapport ---- */
-  .ra-doc { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px; }
-  .ra-head { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 6px; }
-  .ra-brand { font-size: 28px; font-weight: 800; letter-spacing: 1px; }
-  .ra-ttl { text-align: right; font-size: 15px; font-weight: 700; line-height: 1.3; }
-  .ra-ttl span { font-weight: 500; color: var(--muted); }
-  .ra-sec { padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .ra-sec:last-child { border-bottom: none; }
-  .ra-h { font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-  .ra-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  .ra-tbl td { padding: 4px 0; font-size: 15px; }
-  .ra-q { width: 44px; font-weight: 700; }
-  .ra-x { width: 20px; color: var(--muted); }
-  .ra-d { color: var(--ink); }
-  .ra-a { text-align: right; font-weight: 700; }
-  .ra-empty { color: var(--muted); font-style: italic; }
-  .ra-line { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; font-size: 15px; }
-  .ra-line b { font-variant-numeric: tabular-nums; }
-  .ra-tot { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; font-weight: 800; font-size: 16px; }
-  .ra-ok { color: var(--ok); }
-  .ra-bad { color: var(--accent); }
-  .ra-srv { margin-top: 2px; }
-  .ra-srv th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: 4px 6px 4px 0; font-weight: 700; }
-  .ra-srv th:nth-child(n+3), .ra-srv td:nth-child(n+3) { text-align: right; }
-  .ra-srv td { padding: 6px 6px 6px 0; font-size: 14px; border-top: 1px solid var(--line); }
-  .ra-sv-n { font-weight: 700; }
-
-  /* ---- Administration ---- */
-  .hist-card { padding: 16px 18px; }
-  .hist-date { font-size: 17px; font-weight: 800; margin-bottom: 10px; }
-  .hist-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-  .hist-chip {
-    font-family: inherit; font-size: 15px; font-weight: 600; padding: 12px 16px;
-    border: 1.5px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; cursor: pointer; text-align: left;
-  }
-  .hist-chip:active { background: #f1f1ee; }
-  .hist-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
-  .hist-svc { font-size: 16px; font-weight: 600; }
-  .hist-acts { display: flex; gap: 8px; }
-  .hist-view, .hist-del {
-    font-family: inherit; font-size: 14px; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--line); background: #fff;
-  }
-  .hist-view { color: var(--ink); }
-  .hist-del { color: #fff; background: var(--accent); border-color: var(--accent); }
-  .hist-view:active { background: #f1f1ee; }
-  .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-  .week-nav button {
-    font-family: inherit; font-size: 22px; font-weight: 800; width: 52px; height: 52px;
-    border: 1.5px solid var(--line); background: #fff; color: var(--ink); border-radius: 14px; cursor: pointer;
-  }
-  .week-nav span { font-size: 15px; font-weight: 700; text-align: center; flex: 1; }
-  .wk-card { padding: 16px 18px; }
-  .wk-name { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
-  .wk-total { color: var(--accent); font-variant-numeric: tabular-nums; }
-  .wk-line { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); }
-  .wk-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
-  .cust-dates { display: flex; gap: 12px; }
-  .cust-dates label { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-  .cust-lbl { font-size: 13px; color: var(--muted); font-weight: 700; }
-  .cust-dates input[type="date"] {
-    width: 100%; font-size: 17px; padding: 12px 14px; border: 1.5px solid var(--line);
-    border-radius: 12px; background: #fff; color: var(--ink); font-family: inherit; -webkit-appearance: none; appearance: none;
-  }
-  .cust-srv-list { display: flex; flex-direction: column; }
-  .cust-srv { display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 17px; font-weight: 600; }
-  .cust-srv:last-child { border-bottom: none; }
-  .cust-srv input[type="checkbox"] { width: 26px; height: 26px; accent-color: var(--accent); }
-
-  /* ---- Bannière de statut ---- */
-  .status { border-radius: 14px; padding: 14px 16px; font-size: 15px; font-weight: 600; margin-top: 18px; }
-  .status.ok { background: #e7f3ec; color: var(--ok); }
-  .status.warn { background: var(--accent-soft); color: var(--accent); }
-
-  /* ---- Pavé numérique ---- */
-  body.keypad-open { padding-bottom: 320px; }
-  #keypad {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 200;
-    background: #ffffff; border-top: 1px solid var(--line);
-    box-shadow: 0 -10px 30px rgba(0,0,0,.12);
-    padding: 12px 12px calc(14px + env(safe-area-inset-bottom));
-    transform: translateY(115%); transition: transform .22s ease;
-  }
-  #keypad.show { transform: translateY(0); }
-  .kp-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 6px 10px; max-width: 520px; margin: 0 auto;
-  }
-  .kp-head .kp-lbl { font-size: 15px; color: var(--ink); font-weight: 700; }
-  .kp-head-btns { display: flex; align-items: center; gap: 10px; }
-  .kp-sign {
-    font-family: inherit; font-size: 16px; font-weight: 800; color: var(--accent);
-    background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 12px;
-    padding: 10px 16px; cursor: pointer;
-  }
-  .kp-sign:active { background: #f0d6d3; }
-  .kp-done {
-    font-family: inherit; font-size: 16px; font-weight: 800; color: #fff; background: var(--ink);
-    border: none; border-radius: 12px; padding: 10px 22px; cursor: pointer;
-  }
-  .kp-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    max-width: 520px; margin: 0 auto;
-  }
-  .kp-grid button {
-    font-family: inherit; font-size: 30px; font-weight: 700; color: var(--ink);
-    background: #f1f1ee; border: none; border-radius: 14px; padding: 20px 0; cursor: pointer;
-    transition: background .1s ease; -webkit-user-select: none; user-select: none;
-  }
-  .kp-grid button:active { background: #e2e2dd; }
-  .kp-grid button.kp-act { background: var(--accent-soft); color: var(--accent); font-size: 26px; }
-  .kp-grid button.kp-ok { background: var(--ink); color: #fff; font-size: 22px; font-weight: 800; }
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--brand:#4f46e5;--kitchen:#d97706;--service:#2563eb;--plonge:#0d9488;--hotesse:#db2777;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08)}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+#app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding:0 6px}
+.brand .logo{font-size:26px}.brand-name{font-weight:700;color:#fff;font-size:16px}.brand-sub{font-size:11px;color:#94a3b8}
+#nav{display:flex;flex-direction:column;gap:2px}
+#nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#cbd5e1;text-decoration:none;font-weight:500;cursor:pointer}
+#nav a:hover{background:#1e293b;color:#fff}#nav a.active{background:var(--brand);color:#fff}
+.sidebar-foot{margin-top:auto;font-size:11px;color:#64748b;padding:10px 6px 0;display:flex;flex-direction:column;gap:6px}
+.sidebar-foot button{width:100%;font-size:12px;background:#1e293b;color:#cbd5e1;border:none}
+.sidebar-foot button:hover{background:#334155;color:#fff}
+#main{flex:1;padding:26px 30px;max-width:1200px}
+#app-foot{text-align:center;padding:16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);background:var(--panel)}
+@media print{.sidebar,#app-foot{display:none}#app{display:block}#main{max-width:none}}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:22px;margin:0}.page-head p{color:var(--muted);margin:4px 0 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:18px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+label.field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+input,select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+input[type=checkbox]{width:16px;height:16px}
+.check{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--ink);font-size:13px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:8px;font-weight:600}
+button:hover{background:#f1f5f9}button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+button.primary:hover{filter:brightness(1.08)}button.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+button.danger{background:#fff;color:var(--bad);border-color:#fecaca}button.danger:hover{background:#fef2f2}
+button.sm{padding:4px 8px;font-size:12px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}tr:hover td{background:#fafbfc}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.tag.kitchen{background:#fef3c7;color:#92400e}.tag.service{background:#dbeafe;color:#1e40af}.tag.plonge{background:#ccfbf1;color:#0f766e}.tag.hotesse{background:#fce7f3;color:#9d174d}.tag.both{background:#ede9fe;color:#5b21b6}
+.board{overflow-x:auto}.board table{min-width:900px}.board th.day{text-align:center}
+.cell-shift{display:block;margin:3px 0;padding:4px 7px;border-radius:6px;font-size:12px;border-left:3px solid;background:#f8fafc}
+.cell-shift.kitchen{border-color:var(--kitchen)}.cell-shift.service{border-color:var(--service)}.cell-shift.plonge{border-color:var(--plonge)}
+.cell-shift .time{font-weight:700}.cell-empty{color:#cbd5e1}
+/* Grille calendrier (heures x jours) */
+.cal{overflow-x:auto;padding-bottom:6px}
+.cal-head{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr));margin-bottom:2px}
+.cal-head .ch{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0}
+.cal-body{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr))}
+.cal-axis{position:relative}
+.cal-axis .hr{position:absolute;left:0;right:4px;text-align:right;font-size:11px;color:var(--muted);transform:translateY(-6px)}
+.cal-col{position:relative;border-left:1px solid var(--line)}
+.cal-col:last-child{border-right:1px solid var(--line)}
+.cal-line{position:absolute;left:0;right:0;border-top:1px solid #eef1f5}
+.cal-block{position:absolute;border-radius:6px;padding:3px 5px;font-size:11px;color:#fff;overflow:hidden;box-shadow:var(--shadow);line-height:1.2}
+.cal-block .bn{font-weight:700}.cal-block .bt{opacity:.9;font-size:10px}
+.cal-block.kitchen{background:var(--kitchen)}.cal-block.service{background:var(--service)}.cal-block.plonge{background:var(--plonge)}.cal-block.hotesse{background:var(--hotesse)}
+/* Grille jour par jour (jours empilés, chacun avec sa propre plage horaire) */
+.day-row{display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line);padding:9px 0}
+.day-row:last-child{border-bottom:none}
+.day-label{width:96px;flex:none;font-weight:700;font-size:13px}
+.day-label .sub{font-weight:400;color:var(--muted);font-size:11px}
+.day-track-wrap{flex:1;overflow-x:auto}
+.day-track{position:relative;min-height:34px}
+.day-hour{position:absolute;top:0;bottom:0;border-left:1px solid #eef1f5}
+.day-hour .lab{position:absolute;top:0;left:3px;font-size:10px;color:var(--muted)}
+.day-block{position:absolute;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:2px 6px;overflow:hidden;white-space:nowrap;box-shadow:var(--shadow);line-height:1.5}
+.day-block.kitchen{background:var(--kitchen)}.day-block.service{background:var(--service)}.day-block.plonge{background:var(--plonge)}.day-block.hotesse{background:var(--hotesse)}
+.day-block.edited{outline:2px solid #0f172a;outline-offset:1px}
+.day-label .add-shift{margin-top:5px;padding:2px 7px;font-size:11px;background:#eef2ff;color:var(--brand);border-color:#c7d2fe}
+.day-label .add-shift:hover{background:#e0e7ff}
+.hm-row{display:flex;align-items:center;gap:8px;margin:2px 0}
+.hm-day{width:60px;flex:none;font-size:11px;font-weight:700;color:#334155}
+.hm-day .sub{font-weight:400;color:var(--muted);font-size:10px}
+.hm-cells{display:flex;gap:1px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.hm-cell{width:20px;height:20px;flex:none;font-size:10px;display:flex;align-items:center;justify-content:center;color:#475569;border-radius:2px}
+.hm-cell.hm-hr{box-shadow:inset 1px 0 0 #94a3b8}
+.cand-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:4px}
+.cand-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+.cand-row:last-child{border-bottom:none}
+.cand-row.ok{background:#f0fdf4}.cand-row.warn{background:#fffbeb}.cand-row.block{background:#fef2f2}
+.cand-name{font-weight:600;min-width:150px}
+.cand-meta{color:var(--muted);font-size:11px;min-width:120px}
+.cand-badges{margin-left:auto;font-size:12px;text-align:right}
+.day-closed{color:var(--muted);font-size:12px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.badge.DRAFT{background:#fef9c3;color:#854d0e}.badge.APPROVED{background:#dcfce7;color:#166534}
+.warn-box{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px}
+.ok-box{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px}
+.cov-grid{overflow-x:auto}.cov-grid table{min-width:700px}.cov-grid th,.cov-grid td{text-align:center;padding:4px 5px}
+.cov-grid input{width:46px;text-align:center;padding:5px}
+.muted{color:var(--muted)}.small{font-size:12px}.right{text-align:right}.spacer{flex:1}.pill-hours{font-variant-numeric:tabular-nums}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(30px);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;opacity:0;transition:all .25s;pointer-events:none;z-index:50;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.bad{background:#b91c1c}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px}
+.modal{background:#fff;border-radius:14px;padding:22px;width:660px;max-width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.modal h2{margin-top:0}.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <div id="appHeader" style="display:none">
-    <div class="header-row">
-      <div class="brand">
-        <div class="logo">KÜTO</div>
-        <div>
-          <div class="sub">Comptoir à tartares</div>
-        </div>
-      </div>
-      <button type="button" class="gear" onclick="openSettings()" aria-label="Paramètres">⚙</button>
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="logo">🗓️</span><div><div class="brand-name">AI-TIMING</div></div></div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <button id="btnExport">⬇ Exporter mes données</button>
+      <button id="btnImport">⬆ Importer</button>
+      <button id="btnReset">↺ Données de démo</button>
     </div>
-    <div class="page-title">Feuille de caisse</div>
-  </div>
-
-  <!-- ===================== ÉCRAN NIP (iPad) ===================== -->
-  <section id="pinScreen" class="screen active">
-    <div class="pin-wrap">
-      <div class="logo" style="font-size:42px;text-align:center;margin-bottom:4px">KÜTO</div>
-      <div class="pin-title">Entre le NIP</div>
-      <div class="pin-dots" id="pinDots">○○○○</div>
-      <div id="pinError" class="pw-err" style="text-align:center;min-height:20px"></div>
-      <div class="kp-grid pin-grid">
-        <button type="button" onclick="pinKey('1')">1</button>
-        <button type="button" onclick="pinKey('2')">2</button>
-        <button type="button" onclick="pinKey('3')">3</button>
-        <button type="button" onclick="pinKey('4')">4</button>
-        <button type="button" onclick="pinKey('5')">5</button>
-        <button type="button" onclick="pinKey('6')">6</button>
-        <button type="button" onclick="pinKey('7')">7</button>
-        <button type="button" onclick="pinKey('8')">8</button>
-        <button type="button" onclick="pinKey('9')">9</button>
-        <button type="button" class="kp-act" onclick="pinKey('clear')">C</button>
-        <button type="button" onclick="pinKey('0')">0</button>
-        <button type="button" class="kp-act" onclick="pinKey('del')">⌫</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== ÉCRAN ACCUEIL ===================== -->
-  <section id="accueil" class="screen">
-    <div class="card">
-      <div class="label">Date</div>
-      <input type="date" id="dateInput">
-    </div>
-
-    <div class="card">
-      <div class="label">Quelle caisse ?</div>
-      <div class="seg">
-        <button type="button" data-service="midi" onclick="selectService('midi')">
-          <span class="ico">☀️</span> Caisse du midi
-        </button>
-        <button type="button" data-service="soir" onclick="selectService('soir')">
-          <span class="ico">🌙</span> Caisse du soir
-        </button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label">Serveurs présents pendant le quart</div>
-      <div id="serverList"></div>
-      <div id="failsafeRow" class="fs-row"></div>
-    </div>
-
-    <button id="startBtn" class="btn-primary" disabled onclick="startSaisie()">Commencer</button>
-  </section>
-
-  <!-- ===================== ÉCRAN PARAMÈTRES ===================== -->
-  <section id="settings" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="closeSettings()">‹ Retour</button>
-      <div class="context">
-        <div class="s">Paramètres</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Serveurs de l'équipe</h2>
-    <p class="section-sub">Ajoute ou retire les serveurs. Ils apparaîtront à l'accueil avec une case à cocher.</p>
-
-    <div class="card">
-      <div id="adminServerList"></div>
-      <div class="add-row">
-        <input type="text" id="newServer" placeholder="Nom du serveur" autocomplete="off"
-               onkeydown="if(event.key==='Enter'){addServer();}">
-        <button type="button" onclick="addServer()">Ajouter</button>
-      </div>
-    </div>
-
-    <h3 class="section-title" style="font-size:16px;margin-top:26px">Administration</h3>
-    <button class="btn-primary" id="prestoSyncBtn" style="margin-top:10px" onclick="openPrestoModal()">Synchroniser l'horaire (Presto)</button>
-    <button class="btn-primary" style="margin-top:12px" onclick="openHistory()">Consulter les feuilles</button>
-    <button class="btn-primary" style="margin-top:12px" onclick="openWeekly()">Rapport de la semaine</button>
-    <button class="btn-primary" style="margin-top:12px" onclick="openCustom()">Rapport personnalisé</button>
-
-    <h3 class="section-title" style="font-size:16px;margin-top:26px">Sécurité</h3>
-    <div class="card">
-      <div class="add-row">
-        <input type="text" id="newPin" inputmode="numeric" maxlength="4" placeholder="Nouveau NIP (4 chiffres)" autocomplete="off">
-        <button type="button" onclick="changePin()">Changer</button>
-      </div>
-      <div class="add-row" style="margin-top:12px">
-        <input type="password" id="newAdminPw" placeholder="Nouveau mot de passe admin" autocomplete="off">
-        <button type="button" onclick="changeAdminPw()">Changer</button>
-      </div>
-      <div id="secMsg" class="pw-err" style="min-height:18px"></div>
-    </div>
-  </section>
-
-  <!-- ===================== HISTORIQUE DES FEUILLES ===================== -->
-  <section id="history" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('settings')">‹ Retour</button>
-      <div class="context"><div class="s">Feuilles</div></div>
-    </div>
-    <h2 class="section-title">Feuilles enregistrées</h2>
-    <p class="section-sub">Touche une journée pour consulter la feuille du midi ou du soir.</p>
-    <div id="historyList"></div>
-  </section>
-
-  <!-- ===================== VUE D'UNE FEUILLE ===================== -->
-  <section id="sheetView" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('history')">‹ Retour</button>
-      <div class="context"><div class="s">Feuille</div></div>
-    </div>
-    <div id="sheetViewBody" class="rapport"></div>
-    <button class="btn-primary" style="margin-top:18px" onclick="emailSheet()">Envoyer par courriel</button>
-    <button class="btn-primary" style="margin-top:12px;background:var(--accent)" onclick="askDeleteSheet()">Supprimer la feuille</button>
-  </section>
-
-  <!-- ===================== RAPPORT HEBDOMADAIRE ===================== -->
-  <section id="weekly" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('settings')">‹ Retour</button>
-      <div class="context"><div class="s">Rapport hebdo</div></div>
-    </div>
-    <h2 class="section-title">Pourboires non payés — semaine</h2>
-    <div class="week-nav">
-      <button type="button" onclick="changeWeek(-1)">‹</button>
-      <span id="weekLabel">—</span>
-      <button type="button" onclick="changeWeek(1)">›</button>
-    </div>
-    <div id="weeklyBody"></div>
-    <button class="btn-primary" style="margin-top:16px" onclick="emailWeekly()">Envoyer par courriel</button>
-  </section>
-
-  <!-- ===================== RAPPORT PERSONNALISÉ ===================== -->
-  <section id="custom" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('settings')">‹ Retour</button>
-      <div class="context"><div class="s">Rapport personnalisé</div></div>
-    </div>
-    <h2 class="section-title">Rapport personnalisé</h2>
-    <div class="card">
-      <div class="label">Période</div>
-      <div class="cust-dates">
-        <label><span class="cust-lbl">Du</span><input type="date" id="custStart"></label>
-        <label><span class="cust-lbl">Au</span><input type="date" id="custEnd"></label>
-      </div>
-    </div>
-    <div class="card">
-      <div class="label">Serveurs</div>
-      <div id="custServers" class="cust-srv-list"></div>
-    </div>
-    <button class="btn-primary" onclick="generateCustom()">Générer le rapport</button>
-    <div id="customBody" style="margin-top:20px"></div>
-    <button class="btn-primary" style="margin-top:12px" onclick="emailCustom()">Envoyer par courriel</button>
-  </section>
-
-  <!-- ===================== ÉCRAN SAISIE ===================== -->
-  <section id="saisie" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="goHome()">‹ Retour</button>
-      <div class="context">
-        <div class="d" id="ctxDate">—</div>
-        <div class="s" id="ctxService">—</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Montant de la caisse complète</h2>
-    <p class="section-sub">Entre la quantité pour chaque coupure. Le total se calcule automatiquement.</p>
-
-    <div class="grid" id="denomGrid"><!-- lignes injectées --></div>
-
-    <div class="total-box">
-      <span class="t">Total de la caisse</span>
-      <span class="v" id="grandTotal">0,00 $</span>
-    </div>
-
-    <button class="btn-primary" style="margin-top:22px" onclick="askSaveCaisse()">Continuer ›</button>
-    <p class="footnote">Étape 1 sur 6 — comptage de la caisse.</p>
-  </section>
-
-  <!-- ===================== ÉCRAN ÉTAPE 2 — RETOUR COMPTANT ===================== -->
-  <section id="etape2" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('saisie')">‹ Retour</button>
-      <div class="context">
-        <div class="d" id="ctxDate2">—</div>
-        <div class="s" id="ctxService2">—</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Retour comptant</h2>
-    <p class="section-sub">Entre le montant du retour comptant, tel qu'indiqué par le système de caisse.</p>
-
-    <div class="card">
-      <div class="casc">
-        <span class="casc-l">Total de la caisse</span>
-        <span class="casc-v" id="c2Total">0,00 $</span>
-      </div>
-      <div class="casc">
-        <span class="casc-l">Moins la caisse</span>
-        <span class="casc-v neg">− 200,00 $</span>
-      </div>
-      <div class="casc casc-input">
-        <span class="casc-l">Moins retour comptant</span>
-        <input class="money" id="retourInput" type="text" inputmode="none" readonly
-               placeholder="0,00 $" data-mode="money" data-label="Retour comptant"
-               onclick="openKeypad(this)">
-      </div>
-    </div>
-
-    <div class="total-box">
-      <span class="t">Sous-total</span>
-      <span class="v" id="c2SousTotal">0,00 $</span>
-    </div>
-
-    <button class="btn-primary" style="margin-top:22px" onclick="continueEtape3()">Continuer ›</button>
-    <p class="footnote">Étape 2 sur 6 — retour comptant.</p>
-  </section>
-
-  <!-- ===================== ÉTAPE 3 — CALCUL & RÉPARTITION ===================== -->
-  <section id="etape3" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('etape2')">‹ Retour</button>
-      <div class="context">
-        <div class="d" id="ctxDate3">—</div>
-        <div class="s" id="ctxService3">—</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Calcul et pourboires</h2>
-    <p class="section-sub">Après le dépôt et les pourboires, la caisse revient toujours à 200,00 $.</p>
-
-    <div class="card">
-      <div class="casc"><span class="casc-l">Solde de la caisse</span><span class="casc-v" id="r3Solde">0,00 $</span></div>
-      <div class="casc"><span class="casc-l">Caisse conservée</span><span class="casc-v neg">− 200,00 $</span></div>
-      <div class="casc"><span class="casc-l">Excédent</span><span class="casc-v" id="r3Excedent">0,00 $</span></div>
-      <div class="casc"><span class="casc-l">Retour comptant</span><span class="casc-v" id="r3Retour">0,00 $</span></div>
-      <div class="casc" id="r3MidiRow" style="display:none"><span class="casc-l">Retour comptant du midi (retiré)</span><span class="casc-v" id="r3MidiRetour">0,00 $</span></div>
-    </div>
-
-    <div class="total-box">
-      <span class="t">Total pourboire</span>
-      <span class="v" id="r3Pourboire">0,00 $</span>
-    </div>
-
-    <div class="total-box" id="r3DepotBox"
-         style="background:#fff;color:var(--ink);border:1.5px solid var(--ink);margin-top:14px;display:none">
-      <span class="t" style="opacity:1;color:var(--muted)">Dépôt à effectuer</span>
-      <span class="v" id="r3Depot">0,00 $</span>
-    </div>
-
-    <div id="r3Status" class="status ok"></div>
-
-    <div class="total-box" id="r3CashBox" style="margin-top:14px;background:var(--accent)">
-      <span class="t">Pourboire à retirer de la caisse</span>
-      <span class="v" id="r3CashTip">0,00 $</span>
-    </div>
-
-    <button class="btn-primary" style="margin-top:22px" onclick="goRetrait()">Continuer ›</button>
-    <p class="footnote">Étape 3 sur 6 — calcul.</p>
-  </section>
-
-  <!-- ===================== HEURES (répartition à plusieurs) ===================== -->
-  <section id="heures" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('etape3')">‹ Retour</button>
-      <div class="context"><div class="s">Heures</div></div>
-    </div>
-    <h2 class="section-title">Heures travaillées</h2>
-    <p class="section-sub">Entre les heures de chaque serveur, puis confirme pour répartir le pourboire.</p>
-    <div class="total-box"><span class="t">Pourboire à répartir</span><span class="v" id="hPourboire">0,00 $</span></div>
-    <div id="hoursServers" style="margin-top:16px"></div>
-    <button class="btn-primary" style="margin-top:20px" onclick="confirmHours()">Confirmer les heures ›</button>
-  </section>
-
-  <!-- ===================== RETRAIT DU POURBOIRE ===================== -->
-  <section id="retrait" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="backFromRetrait()">‹ Retour</button>
-      <div class="context">
-        <div class="d" id="ctxDateRt">—</div>
-        <div class="s" id="ctxServiceRt">—</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Retrait & répartition du pourboire</h2>
-    <p class="section-sub">Le pourboire est réparti selon les heures. Chaque serveur indique le montant qu'il a pris en comptant.</p>
-
-    <div class="card">
-      <div class="casc"><span class="casc-l">Pourboire total (dû)</span><span class="casc-v" id="rtTotalDu">0,00 $</span></div>
-      <div class="casc"><span class="casc-l">Maximum à prendre en comptant</span><span class="casc-v" id="rtCashTip">0,00 $</span></div>
-    </div>
-
-    <div id="rtNote" class="status warn" style="display:none"></div>
-
-    <div id="rtServers"></div>
-
-    <div class="total-box">
-      <span class="t">Total pris en comptant</span>
-      <span class="v" id="rtTakenSum">0,00 $</span>
-    </div>
-    <div id="rtTakenNote" class="status warn" style="display:none"></div>
-
-    <button class="btn-primary" style="margin-top:22px" onclick="askWithdraw()">Confirmer le retrait ›</button>
-    <p class="footnote">Étape 4 sur 6 — retrait du pourboire.</p>
-  </section>
-
-  <!-- ===================== RECOMPTE DE LA CAISSE ===================== -->
-  <section id="recompte" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('retrait')">‹ Retour</button>
-      <div class="context">
-        <div class="d" id="ctxDateR">—</div>
-        <div class="s" id="ctxServiceR">—</div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Recompte de la caisse</h2>
-    <p class="section-sub">Recompte la caisse après le retrait : elle doit être à 200,00 $.</p>
-
-    <div class="grid" id="recountGrid"><!-- injecté --></div>
-
-    <div class="total-box">
-      <span class="t">Total recompté</span>
-      <span class="v" id="recountTotal">0,00 $</span>
-    </div>
-
-    <div id="recountStatus" class="status"></div>
-
-    <button class="btn-primary" style="margin-top:22px" onclick="goRapport()">Voir le rapport ›</button>
-    <p class="footnote">Étape 5 sur 6 — recompte de la caisse.</p>
-  </section>
-
-  <!-- ===================== RAPPORT FINAL ===================== -->
-  <section id="rapport" class="screen">
-    <div class="topbar">
-      <button class="back" onclick="switchScreen('recompte')">‹ Retour</button>
-      <div class="context"><div class="s">Rapport</div></div>
-    </div>
-
-    <p class="section-sub">Vérifie que tout est exact, puis confirme pour enregistrer la feuille.</p>
-    <div id="rapportBody" class="rapport"></div>
-    <div id="rapportActions">
-      <button class="btn-primary" style="margin-top:20px" onclick="confirmRapport()">Confirmer et enregistrer ✓</button>
-    </div>
-    <p class="footnote">Étape 6 sur 6 — validation et enregistrement.</p>
-  </section>
-
+  </aside>
+  <main id="main"></main>
 </div>
-
-<!-- ===================== MODAL SYNCHRO PRESTO ===================== -->
-<div id="prestoModal" class="modal">
-  <div class="modal-card">
-    <div class="confirm-q">Synchroniser l'horaire (Presto)</div>
-    <div class="confirm-total" style="margin-top:4px">Ton mot de passe n'est pas conservé.</div>
-    <div style="margin-top:14px">
-      <div class="label">Courriel Presto</div>
-      <input type="email" id="prestoEmail" autocomplete="username" placeholder="courriel@exemple.com"
-             style="width:100%;font-size:17px;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;-webkit-appearance:none;margin-top:4px">
-      <div class="label" style="margin-top:12px">Mot de passe Presto</div>
-      <input type="password" id="prestoPass" autocomplete="current-password" placeholder="Mot de passe"
-             style="width:100%;font-size:17px;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;-webkit-appearance:none;margin-top:4px"
-             onkeydown="if(event.key==='Enter'){doPrestoSync();}">
-    </div>
-    <div id="prestoMsg" class="pw-err" style="min-height:18px"></div>
-    <div class="modal-btns">
-      <button type="button" onclick="closePresto()">Annuler</button>
-      <button type="button" class="primary" id="prestoGo" onclick="doPrestoSync()">Synchroniser</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== MODAL SUPPRIMER UNE FEUILLE ===================== -->
-<div id="deleteModal" class="modal">
-  <div class="modal-card">
-    <div class="confirm-q">Supprimer cette feuille&nbsp;?</div>
-    <div class="confirm-total">Cette action est définitive.</div>
-    <div class="modal-btns">
-      <button type="button" onclick="closeDelete()">Annuler</button>
-      <button type="button" id="delConfirmBtn" class="primary" style="background:var(--accent);border-color:var(--accent)" onclick="doDeleteSheet()">Supprimer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== MODAL CONFIRMATION SERVEUR MIDI NON PAYÉ ===================== -->
-<div id="carryModal" class="modal">
-  <div class="modal-card">
-    <div class="confirm-q" style="font-size:17px" id="carryConfirmText">—</div>
-    <div class="confirm-total" style="margin-top:8px">L'heure de cette confirmation sera enregistrée.</div>
-    <div class="modal-btns">
-      <button type="button" onclick="closeCarry()">Non, revenir</button>
-      <button type="button" class="primary" onclick="confirmCarryDecline()">Oui, confirmer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== MODAL CONFIRMATION RETRAIT ===================== -->
-<div id="withdrawModal" class="modal">
-  <div class="modal-card">
-    <div class="confirm-q">Le pourboire a-t-il été retiré de la caisse&nbsp;?</div>
-    <div class="confirm-total">Montant : <b id="withdrawAmt">0,00 $</b></div>
-    <div class="modal-btns">
-      <button type="button" onclick="closeWithdraw()">Non</button>
-      <button type="button" class="primary" onclick="confirmWithdraw()">Oui</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== MODAL CONFIRMATION CAISSE ===================== -->
-<div id="confirmModal" class="modal">
-  <div class="modal-card">
-    <div class="confirm-q">Enregistrer le montant de caisse&nbsp;?</div>
-    <div class="confirm-total">Total : <b id="confirmTotal">0,00 $</b></div>
-    <div class="modal-btns">
-      <button type="button" onclick="closeConfirm()">Non</button>
-      <button type="button" class="primary" onclick="confirmSaveCaisse()">Oui</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== MODAL MOT DE PASSE ===================== -->
-<div id="pwModal" class="modal">
-  <div class="modal-card">
-    <div class="label">Accès administrateur</div>
-    <input type="password" id="pwInput" placeholder="Mot de passe" autocomplete="off"
-           onkeydown="if(event.key==='Enter'){checkPw();}">
-    <div id="pwError" class="pw-err"></div>
-    <div class="modal-btns">
-      <button type="button" onclick="closePw()">Annuler</button>
-      <button type="button" class="primary" onclick="checkPw()">Accéder</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== PAVÉ NUMÉRIQUE ===================== -->
-<div id="keypad">
-  <div class="kp-head">
-    <div class="kp-lbl" id="kpLabel">—</div>
-    <div class="kp-head-btns">
-      <button type="button" id="kpSign" class="kp-sign" onclick="keySign()">± négatif</button>
-      <button type="button" class="kp-done" onclick="keyPress('del')">⌫</button>
-    </div>
-  </div>
-  <div class="kp-grid">
-    <button type="button" onclick="keyPress('1')">1</button>
-    <button type="button" onclick="keyPress('2')">2</button>
-    <button type="button" onclick="keyPress('3')">3</button>
-    <button type="button" onclick="keyPress('4')">4</button>
-    <button type="button" onclick="keyPress('5')">5</button>
-    <button type="button" onclick="keyPress('6')">6</button>
-    <button type="button" onclick="keyPress('7')">7</button>
-    <button type="button" onclick="keyPress('8')">8</button>
-    <button type="button" onclick="keyPress('9')">9</button>
-    <button type="button" class="kp-act" id="kpAlt" onclick="keyAlt()">C</button>
-    <button type="button" onclick="keyPress('0')">0</button>
-    <button type="button" class="kp-ok" onclick="okNext()">OK</button>
-  </div>
-</div>
-
+<footer id="app-foot">© 2026 Eric Gloutnez — Tous droits réservés</footer>
+<div id="toast" class="toast"></div>
+<input type="file" id="fileImport" accept="application/json" style="display:none" />
 <script>
-  // ---- Coupures (pièces + billets) ----
-  const DENOMS = [
-    { v: 0.05, label: "0,05 $" },
-    { v: 0.10, label: "0,10 $" },
-    { v: 0.25, label: "0,25 $" },
-    { v: 1.00, label: "1,00 $" },
-    { v: 2.00, label: "2,00 $" },
-    { v: 5.00, label: "5,00 $" },
-    { v: 10.00, label: "10,00 $" },
-    { v: 20.00, label: "20,00 $" },
-    { v: 50.00, label: "50,00 $" },
-    { v: 100.00, label: "100,00 $" },
+// ===========================================================================
+//  AI-TIMING — application de test autonome (fonctionne sans serveur)
+//  Édition + sauvegarde locale + génération. Même moteur que la version finale.
+// ===========================================================================
+
+// ---- Moteur d'assignation --------------------------------------------------
+const DAY_MIN=1440;
+function minutesToHHMM(m){const h=Math.floor(m/60),mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+function hhmmToMin(s){if(!s)return 0;const[h,m]=s.split(':').map(Number);return h*60+(m||0);}
+function dayOfWeek(s){return new Date(s+'T00:00:00Z').getUTCDay();}
+function addDays(s,n){const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function mondayOf(s){const d=dayOfWeek(s);return addDays(s,d===0?-6:-(d-1));}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function weekDatesFrom(s){return Array.from({length:7},(_,i)=>addDays(s,i));}
+function frDate(s){const d=new Date(s+'T00:00:00Z');return DOW_SHORT[d.getUTCDay()]+' '+d.getUTCDate();}
+
+function generateSchedule(input){
+  const{weekDates=[],departments=[],employees=[],availability={},timeOff=[],openingHoursByDate={},coverageByDate={},options={}}=input;
+  const gran=30;const oneShiftPerDay=options.oneShiftPerDay!==false; // résolution de base : 30 minutes
+  const timeOffSet=new Set(timeOff.map(t=>t.employeeId+'|'+t.date));
+  // On ignore toute couverture demandée HORS des heures d'ouverture (avant l'ouverture ou à/après la fermeture) :
+  // un quart ne peut pas dépasser la fermeture, donc ces créneaux seraient des trous impossibles à combler.
+  const need={};for(const date of weekDates){need[date]={};const cov=coverageByDate[date]||{};for(const dept of departments){const ph=cov[dept.id]||{};need[date][dept.id]={};const open=(openingHoursByDate[date]||{})[dept.id];for(const h of Object.keys(ph)){const hn=Number(h);if(open&&hn>=open.open&&hn<open.close)need[date][dept.id][hn]=ph[h];}}}
+  const assignments=[],empWeekMin={},empDays={},empDayShift={};
+  for(const e of employees){empWeekMin[e.id]=0;empDays[e.id]=new Set();empDayShift[e.id]={};}
+  const sorted=[...employees].filter(e=>e.active!==false).sort((a,b)=>(a.rank??9999)-(b.rank??9999));
+  const slotsInRange=(s,e)=>{const l=[];for(let t=Math.floor(s/30)*30;t<e;t+=30)l.push(t);return l;}; // créneaux de 30 min couverts
+  const restOk=(emp,date,start,end)=>{const mr=(emp.minRestHours??0)*60;if(mr<=0)return true;const i=weekDates.indexOf(date),p=weekDates[i-1],n=weekDates[i+1];
+    if(p&&empDayShift[emp.id][p]&&(DAY_MIN-empDayShift[emp.id][p].end+start)<mr)return false;
+    if(n&&empDayShift[emp.id][n]&&(DAY_MIN-end+empDayShift[emp.id][n].start)<mr)return false;return true;};
+  const bestForDate=(emp,date)=>{
+    if(oneShiftPerDay&&empDayShift[emp.id][date])return null;
+    if(timeOffSet.has(emp.id+'|'+date))return null;
+    if(empDays[emp.id].size>=(emp.maxDaysPerWeek??7)&&!empDays[emp.id].has(date))return null;
+    const dow=dayOfWeek(date);const wins=(availability[emp.id]||{})[dow]||[];if(!wins.length)return null;
+    const minLen=(emp.minShiftHours??3)*60,maxLen=(emp.maxShiftHours??8)*60;
+    const rem=(emp.maxHoursPerWeek??40)*60-empWeekMin[emp.id];if(rem<minLen)return null;
+    let best=null;
+    for(const deptId of(emp.departments||[])){const open=(openingHoursByDate[date]||{})[deptId];if(!open)continue;const nm=(need[date]||{})[deptId]||{};
+      for(const w of wins){const uS=Math.max(w.start,open.open),uE=Math.min(w.end,open.close);if(uE-uS<minLen)continue;
+        const s0=Math.ceil(uS/gran)*gran;
+        for(let s=s0;s+minLen<=uE;s+=gran){const mE=Math.min(s+maxLen,uE,s+rem);
+          for(let e=s+minLen;e<=mE;e+=gran){if(!restOk(emp,date,s,e))continue;let uc=0,ov=0;
+            for(const h of slotsInRange(s,e)){if((nm[h]??0)>0)uc++;else ov++;}const sc=uc-0.15*ov;
+            if(uc>0&&(!best||sc>best.score+1e-9||(Math.abs(sc-best.score)<1e-9&&e-s<best.end-best.start)||(Math.abs(sc-best.score)<1e-9&&e-s===best.end-best.start&&s<best.start)))best={deptId,start:s,end:e,score:sc,win:{start:w.start,end:w.end},open:{open:open.open,close:open.close}};}}}}
+    return best;};
+  const bestForWeek=(emp)=>{let best=null;for(const date of weekDates){const s=bestForDate(emp,date);if(s&&(!best||s.score>best.score))best={...s,date};}return best;};
+  // Saturation par rang : chaque employé (dans l'ordre de rang) réclame TOUS les jours disponibles
+  // qu'il peut couvrir (selon ses limites max heures/jours, repos, 1 quart/jour) AVANT de passer
+  // à l'employé de rang inférieur. Ainsi le rang 1 est toujours choisi en premier sur ses quarts dispo.
+  for(const emp of sorted){let guard=0;
+    while(guard++<1000){
+      if((emp.maxHoursPerWeek??40)*60-empWeekMin[emp.id]<(emp.minShiftHours??3)*60)break;
+      const sh=bestForWeek(emp);if(!sh)break;const{date}=sh;
+      const weeklyBefore=empWeekMin[emp.id],daysBefore=empDays[emp.id].size;
+      let slotsFilled=0;for(const t of slotsInRange(sh.start,sh.end)){const nm=need[date][sh.deptId];if((nm[t]??0)>0){nm[t]--;slotsFilled++;}}
+      const why={rank:emp.rank,order:assignments.length+1,slotsFilled,win:sh.win,open:sh.open,maxShiftMin:(emp.maxShiftHours??8)*60,minShiftMin:(emp.minShiftHours??3)*60,minRestH:emp.minRestHours??0,maxDays:emp.maxDaysPerWeek??7,daysBefore,weeklyBefore,weeklyMax:(emp.maxHoursPerWeek??40)*60};
+      assignments.push({employeeId:emp.id,departmentId:sh.deptId,date,start:sh.start,end:sh.end,_why:why});
+      empDayShift[emp.id][date]={start:sh.start,end:sh.end};empDays[emp.id].add(date);empWeekMin[emp.id]+=sh.end-sh.start;}}
+  const unmet=[];const employeeHours={};for(const e of employees)employeeHours[e.id]=empWeekMin[e.id]||0;
+  for(const date of weekDates)for(const dept of departments){const req=(coverageByDate[date]||{})[dept.id]||{};
+    for(const h of Object.keys(req).map(Number)){const sn=need[date][dept.id][h]??0;if(sn>0)unmet.push({date,departmentId:dept.id,hour:h,missing:sn});}}
+  const warnings=[];
+  if(unmet.length){const tm=unmet.reduce((s,u)=>s+u.missing,0);warnings.push(tm+' heure(s)-personne non couvertes sur '+unmet.length+' plage(s). Ajuste les disponibilités ou ajoute du personnel.');}
+  return{assignments,unmet,employeeHours,warnings};
+}
+
+// ---- Constantes ------------------------------------------------------------
+const H=(h,m=0)=>h*60+m;
+const DOW=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const DOW_SHORT=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DOW_ORDER=[1,2,3,4,5,6,0]; // affichage : lundi -> dimanche
+const DEPTS=[{id:'kitchen',key:'kitchen',name:'Cuisine'},{id:'service',key:'service',name:'Service'},{id:'plonge',key:'plonge',name:'Plonge'},{id:'hotesse',key:'hotesse',name:'Hôtesse'}];
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const empDoes=(e,key)=>!!e['does'+cap(key)];
+
+// ---- Données par défaut (démo) --------------------------------------------
+function defaultState(){
+  const openByDow={0:[H(10),H(21)],1:[H(11),H(22)],2:[H(11),H(22)],3:[H(11),H(22)],4:[H(11),H(22)],5:[H(11),H(23)],6:[H(11),H(23)]};
+  // Colonnes : prénom, nom, rang, cuisine, service, type, hMin, hMax, joursMax, plonge
+  const employees=[
+   ['Alice','Tremblay',1,true,true,'FULL_TIME',35,40,5,false],['Bruno','Lavoie',2,true,false,'FULL_TIME',35,40,5,true],
+   ['Chloé','Moreau',3,false,true,'FULL_TIME',30,40,5,false],['David','Roy',4,true,true,'FULL_TIME',30,40,5,true],
+   ['Emma','Gagnon',5,false,true,'PART_TIME',20,32,4,false],['Félix','Bergeron',6,true,false,'PART_TIME',20,32,4,true],
+   ['Gabrielle','Côté',7,false,true,'PART_TIME',15,30,4,false],['Hugo','Fortin',8,true,true,'PART_TIME',15,30,4,true],
+   ['Inès','Bouchard',9,false,true,'PART_TIME',10,24,3,false],['Jacob','Girard',10,true,false,'PART_TIME',10,24,3,true],
+   ['Kim','Pelletier',11,true,true,'PART_TIME',8,20,3,true],['Louis','Bélanger',12,false,true,'PART_TIME',6,16,2,false],
+  ].map((a,i)=>{const av={};for(let d=0;d<7;d++)av[d]=[{start:H(8),end:H(23,59)}];
+    return{id:'e'+(i+1),firstName:a[0],lastName:a[1],rank:a[2],active:true,doesKitchen:a[3],doesService:a[4],doesPlonge:!!a[9],doesHotesse:[2,4,6].includes(i),employmentType:a[5],
+      minHoursPerWeek:a[6],maxHoursPerWeek:a[7],minShiftHours:4,maxShiftHours:8,minRestHours:10,maxDaysPerWeek:a[8],availability:av};});
+  const openingHours={};const coverage={};
+  for(const dept of DEPTS){openingHours[dept.key]={};coverage[dept.key]={};
+    for(let d=0;d<7;d++){const[o,c]=openByDow[d];openingHours[dept.key][d]={closed:false,open:o,close:c};
+      const hrs={};for(let t=o;t<c;t+=30){const h=t/60;hrs[t]=dept.key==='kitchen'?2:dept.key==='plonge'?1:dept.key==='hotesse'?1:(h<15?1:2);}coverage[dept.key][d]=hrs;}}
+  const shiftTemplates=[
+    {id:'t1',label:'Ouverture Service',deptKey:'service',start:H(11),end:H(16)},
+    {id:'t2',label:'Fermeture Service',deptKey:'service',start:H(16),end:H(22)},
+    {id:'t3',label:'Journée Cuisine',deptKey:'kitchen',start:H(11),end:H(21)},
+    {id:'t4',label:'Soir Plonge',deptKey:'plonge',start:H(17),end:H(22)},
   ];
+  return{employees,openingHours,coverage,coverageVersions:[{id:'base',effectiveFrom:'2000-01-01',label:'Configuration de base',coverage}],timeOff:[],extraAvail:[],shiftTemplates,settings:{granularityMin:30,oneShiftPerDay:true},weekStart:mondayOf(todayStr())};
+}
 
-  let service = null;
-  let roster = [];              // [{id, name}]
-  let selected = new Set();     // ids des serveurs cochés
-  let shiftServers = [];        // serveurs retenus pour ce quart (pour l'étape 4)
-  let seq = 1;
-  let liveCaisseTotal = 0;      // total en direct pendant la saisie
-  let caisseTotal = 0;          // total figé au moment de l'enregistrement
-  let caisseDenoms = [];        // détail des coupures figé (pour le rapport)
-  let currentSheet = null;      // feuille en cours (calcul + répartition)
-  let midiSheetForShift = null; // feuille du midi rattachée au soir (pour le report)
-  const CAISSE_FLOAT = 200;     // montant conservé dans la caisse
+// ---- Stockage --------------------------------------------------------------
+const KEY='horaire-ia-state-v1';
+let memState=null;
+// Convertit une couverture au format horaire (clés 0-23) vers des créneaux de
+// 30 min (clés en minutes). Idempotent : ne retouche pas ce qui est déjà au bon format.
+function migrateCoverage(cov){if(!cov)return;for(const dept of DEPTS){const dd=cov[dept.key];if(!dd)continue;
+  for(const dow of Object.keys(dd)){const day=dd[dow]||{};const keys=Object.keys(day);
+    if(keys.length&&keys.every(k=>Number(k)<24)){const nd={};for(const k of keys){const h=Number(k),v=day[k];nd[h*60]=v;nd[h*60+30]=v;}dd[dow]=nd;}}}}
+// Migration douce : garantit que chaque département (ex. plonge ajoutée) a ses
+// heures et sa couverture, sans écraser les données déjà saisies.
+function normalize(st){const def=defaultState();st.openingHours=st.openingHours||{};st.coverage=st.coverage||{};
+  for(const dept of DEPTS){if(!st.openingHours[dept.key])st.openingHours[dept.key]=def.openingHours[dept.key];
+    if(!st.coverage[dept.key])st.coverage[dept.key]=def.coverage[dept.key];}
+  st.employees=(st.employees||[]).map(e=>{const c={...e};for(const d of DEPTS)if(c['does'+cap(d.key)]===undefined)c['does'+cap(d.key)]=false;return c;});
+  st.timeOff=st.timeOff||[];st.extraAvail=st.extraAvail||[];st.prestoLog=st.prestoLog||[];if(!st.shiftTemplates)st.shiftTemplates=def.shiftTemplates||[];st.settings=st.settings||def.settings;
+  // Couverture à dates d'effet : au moins une version « de base ».
+  st.coverage=st.coverage||def.coverage;
+  if(!st.coverageVersions||!st.coverageVersions.length)st.coverageVersions=[{id:'base',effectiveFrom:'2000-01-01',label:'Configuration de base',coverage:st.coverage}];
+  for(const v of st.coverageVersions){v.coverage=v.coverage||{};for(const dept of DEPTS){if(!v.coverage[dept.key])v.coverage[dept.key]=def.coverage[dept.key];}}
+  st.coverageVersions.sort((a,b)=>a.effectiveFrom.localeCompare(b.effectiveFrom));
+  migrateCoverage(st.coverage);for(const v of st.coverageVersions)migrateCoverage(v.coverage); // horaire -> 30 min
+  return st;}
+// Couverture applicable à une date : dernière version dont la date d'effet <= date.
+function coverageForDate(date){let best=null;for(const v of state.coverageVersions){if(v.effectiveFrom<=date&&(!best||v.effectiveFrom>best.effectiveFrom))best=v;}return (best||state.coverageVersions[0]).coverage;}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}if(memState)return memState;return defaultState();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){memState=state;}serverSave();}
+let state=normalize(load());
+function resetDemo(){state=defaultState();save();toast('Données de démo rechargées.');route();}
 
-  // ================= Connexion + synchronisation serveur =================
-  let appPin = '';
-  let adminTok = '';
-  let pinBuf = '';
+// ---- Aide DOM --------------------------------------------------------------
+function el(tag,props={},...kids){const n=document.createElement(tag);
+  for(const[k,v]of Object.entries(props||{})){if(k==='class')n.className=v;else if(k==='style')n.setAttribute('style',v);else if(k==='html')n.innerHTML=v;else if(k.startsWith('on')&&typeof v==='function')n.addEventListener(k.slice(2).toLowerCase(),v);else if(v===true)n.setAttribute(k,'');else if(v!==false&&v!=null)n.setAttribute(k,v);}
+  for(const c of kids.flat()){if(c==null||c===false)continue;n.appendChild(typeof c==='string'||typeof c==='number'?document.createTextNode(String(c)):c);}return n;}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild);return n;}
+let toastTimer;function toast(msg,bad){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(bad?' bad':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',2600);}
+function modal(title,content,onSave,saveLabel){const bg=el('div',{class:'modal-bg'});const box=el('div',{class:'modal'});const close=()=>bg.remove();
+  const foot=el('div',{class:'modal-foot'},el('button',{onClick:close},'Annuler'),el('button',{class:'primary',onClick:()=>{try{onSave(close);}catch(e){toast(e.message,true);}}},saveLabel||'Enregistrer'));
+  box.append(el('h2',{},title),content,foot);bg.append(box);bg.addEventListener('click',e=>{if(e.target===bg)close();});document.body.appendChild(bg);}
+function deptTagEmp(e){const ds=DEPTS.filter(d=>empDoes(e,d.key));if(!ds.length)return el('span',{class:'muted small'},'—');
+  return el('span',{},...ds.map((d,i)=>el('span',{class:'tag '+d.key,style:i?'margin-left:4px':''},d.name)));}
+function uid(){return 'e'+Math.random().toString(36).slice(2,9);}
+function nowStamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
 
-  async function api(pathUrl, opts){
-    opts = opts || {};
-    const headers = { 'Content-Type': 'application/json' };
-    if (appPin) headers['x-pin'] = appPin;
-    if (opts.admin && adminTok) headers['x-admin-token'] = adminTok;
-    const res = await fetch(pathUrl, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
-    if (!res.ok) throw new Error('API ' + res.status);
-    return res.json();
-  }
+// Répartition des quarts qui se chevauchent en « couloirs » côte à côte.
+function layoutLanes(shifts){const sorted=[...shifts].sort((a,b)=>a.start-b.start||a.end-b.end);const laneEnds=[];const res=[];
+  for(const s of sorted){let lane=laneEnds.findIndex(e=>e<=s.start);if(lane===-1){lane=laneEnds.length;laneEnds.push(s.end);}else laneEnds[lane]=s.end;res.push({s,lane});}
+  return{res,lanes:laneEnds.length||1};}
 
-  function pinKey(k){
-    if (k === 'del') pinBuf = pinBuf.slice(0, -1);
-    else if (k === 'clear') pinBuf = '';
-    else if (pinBuf.length < 4) pinBuf += k;
-    let dots = ''; for (let i = 0; i < 4; i++) dots += i < pinBuf.length ? '●' : '○';
-    document.getElementById('pinDots').textContent = dots;
-    if (pinBuf.length === 4) submitPin(pinBuf);
-  }
+// Un jour = une ligne horizontale (heures de gauche à droite) pour un département.
+// La plage affichée = LES HEURES D'OUVERTURE de ce jour uniquement (rien avant/après).
+// Explique pourquoi un quart a été attribué (clic sur un quart).
+function explainShift(a,emp,dept,date){
+  const nm=emp?emp.firstName+' '+emp.lastName:'?';const w=a._why;
+  const content=el('div',{});
+  content.appendChild(el('p',{},el('strong',{},nm),' — '+dept.name+', '+DOW[dayOfWeek(date)]+' '+date+', '+minutesToHHMM(a.start)+'–'+minutesToHHMM(a.end)+'.'));
+  if(!w){content.appendChild(el('div',{class:'warn-box'},'Cet horaire a été généré avant l’ajout de l’explication (ou ce quart a été modifié à la main). Le détail du choix n’est pas disponible, mais voici la situation des autres employés.'));content.appendChild(whyNotOthers(a,dept,date));modal('Pourquoi ce quart ?',content,(c)=>c(),'OK');return;}
+  const durH=((a.end-a.start)/60).toFixed(1);
+  const lines=[
+    '👤 Priorité : '+nm+' a le rang '+w.rank+'. Le moteur assigne par ordre de rang (rang 1 en premier). À son tour, ce bloc était son meilleur choix cette semaine.',
+    '🎯 Utilité : ce quart comble '+w.slotsFilled+' créneau(x) de 30 min encore requis en '+dept.name+' — c’est ce qui a déterminé cette journée et ces heures.',
+    '⏱️ Durée : '+durH+' h (quart min '+(w.minShiftMin/60)+' h, max '+(w.maxShiftMin/60)+' h).',
+    '📅 Ce jour-là : disponibilité '+minutesToHHMM(w.win.start)+'–'+minutesToHHMM(w.win.end)+' · ouverture '+dept.name+' '+minutesToHHMM(w.open.open)+'–'+minutesToHHMM(w.open.close)+'.',
+    '📊 Charge : '+(w.weeklyBefore/60).toFixed(1)+' h déjà placées avant ce quart (max '+(w.weeklyMax/60)+' h/sem.) · '+w.daysBefore+' jour(s) déjà travaillé(s) (max '+w.maxDays+').',
+  ];
+  let endReason;
+  if(a.end>=w.open.close)endReason='la fermeture du département ('+minutesToHHMM(w.open.close)+')';
+  else if(a.end>=w.win.end)endReason='la fin de sa disponibilité ('+minutesToHHMM(w.win.end)+')';
+  else if(a.end-a.start>=w.maxShiftMin)endReason='la durée maximale de quart ('+(w.maxShiftMin/60)+' h)';
+  else if(w.weeklyBefore+(a.end-a.start)>=w.weeklyMax)endReason='son maximum d’heures par semaine';
+  else endReason='qu’au-delà, la couverture était déjà comblée (inutile d’ajouter du personnel)';
+  lines.push('🔚 Fin à '+minutesToHHMM(a.end)+' : limitée par '+endReason+'.');
+  for(const l of lines)content.appendChild(el('p',{style:'margin:8px 0'},l));
+  content.appendChild(whyNotOthers(a,dept,date));
+  content.appendChild(el('div',{class:'muted small',style:'margin-top:10px'},'Le moteur est déterministe : mêmes données → même horaire. Pour modifier ce quart : ajuste le rang, la disponibilité, la couverture, les congés ou l’alternance.'));
+  modal('Pourquoi ce quart ?',content,(c)=>c(),'OK');
+}
+// ---- Édition manuelle d'un horaire généré ----------------------------------
+// Recalcule les heures par employé à partir des quarts (après édition manuelle).
+function recomputeHours(weeks){for(const wk of weeks){const eh={};for(const a of wk.result.assignments)eh[a.employeeId]=(eh[a.employeeId]||0)+(a.end-a.start);wk.result.employeeHours=eh;recomputeUnmet(wk);}}
+// Recalcule les plages non couvertes + l'avertissement, à partir des quarts actuels.
+function recomputeUnmet(wk){const unmet=[];for(const date of wk.weekDates){const dow=dayOfWeek(date);const cov=coverageForDate(date);
+  for(const dept of DEPTS){const req=(cov[dept.key]&&cov[dept.key][dow])||{};const oh=state.openingHours[dept.key][dow];const shifts=wk.result.assignments.filter(a=>a.departmentId===dept.id&&a.date===date);
+    for(const h of Object.keys(req).map(Number)){if(!oh||oh.closed||h<oh.open||h>=oh.close)continue; // couverture hors ouverture = ignorée
+      let asg=0;for(const a of shifts)if(a.start<=h&&a.end>h)asg++;const miss=(req[h]||0)-asg;if(miss>0)unmet.push({date,departmentId:dept.id,hour:h,missing:miss});}}}
+  wk.result.unmet=unmet;const warnings=[];if(unmet.length){const tm=unmet.reduce((s,u)=>s+u.missing,0);warnings.push(tm+' heure(s)-personne non couvertes sur '+unmet.length+' plage(s). Ajuste les disponibilités ou ajoute du personnel.');}wk.result.warnings=warnings;}
+// Conflits (avertissements, non bloquants) pour un quart manuel.
+function shiftConflicts(empId,date,s,e,dept,wk,excludeA){const out=[];const emp=state.employees.find(x=>x.id===empId);if(!emp)return out;const dow=dayOfWeek(date);
+  for(const c of(state.timeOff||[]))if(c.employeeId===empId&&c.start<=date&&date<=(c.end||c.start)){out.push('en congé ce jour');break;}
+  let wins=[...((emp.availability&&emp.availability[dow])||[])];for(const x of(state.extraAvail||[]))if(x.employeeId===empId&&x.date===date)wins.push({start:x.start,end:x.end});
+  if(!wins.length)out.push('aucune disponibilité déclarée ce jour');else if(!wins.some(w=>w.start<=s&&w.end>=e))out.push('hors de sa disponibilité déclarée');
+  const oh=state.openingHours[dept.key][dow];if(!oh||oh.closed)out.push('département fermé ce jour');else if(s<oh.open||e>oh.close)out.push('hors des heures d’ouverture');
+  for(const a of wk.result.assignments){if(a===excludeA)continue;if(a.employeeId===empId&&a.date===date&&s<a.end&&e>a.start){out.push('chevauche un autre quart de cet employé');break;}}
+  return out;}
+// Disponibilité effective d'une semaine (base + alternance + dispos supp. + congés) — même logique que la génération.
+function effectiveAvailability(ws){const weekDates=weekDatesFrom(ws);
+  const availability={};for(const e of state.employees){availability[e.id]={};for(let d=0;d<7;d++)availability[e.id][d]=(e.availability&&e.availability[d])||[];}
+  const timeOff=[];for(const c of(state.timeOff||[]))for(const date of weekDates)if(c.start<=date&&date<=(c.end||c.start))timeOff.push({employeeId:c.employeeId,date});
+  const conge=new Set(timeOff.map(t=>t.employeeId+'|'+t.date));
+  applyAlternance(availability,ws,weekDates,conge);
+  for(const x of(state.extraAvail||[]))if(weekDates.indexOf(x.date)>=0){const dow=dayOfWeek(x.date);availability[x.employeeId]=availability[x.employeeId]||{};availability[x.employeeId][dow]=(availability[x.employeeId][dow]||[]).concat([{start:x.start,end:x.end}]);}
+  return availability;}
+// Sélecteur d'employé trié par critères (dispo + rang), avec statut de chacun. Retourne {node,setTimes,get}.
+function candidatePicker(dept,date,wk,initialId,excludeA){
+  const dow=dayOfWeek(date);const ws=mondayOf(date);const avail=effectiveAvailability(ws);
+  const emps=state.employees.filter(x=>empDoes(x,dept.key)&&x.active!==false);
+  let selId=initialId||null,curS=0,curE=0;const listWrap=el('div',{class:'cand-list'});
+  function statusOf(emp){const labels=[];let level='ok';
+    const onConge=(state.timeOff||[]).some(c=>c.employeeId===emp.id&&c.start<=date&&date<=(c.end||c.start));
+    if(onConge){labels.push('🌴 congé');level='block';}
+    const wins=(avail[emp.id]&&avail[emp.id][dow])||[];
+    let wkMin=0;if(wk)for(const x of wk.result.assignments){if(x===excludeA)continue;if(x.employeeId===emp.id)wkMin+=x.end-x.start;}
+    const maxMin=(emp.maxHoursPerWeek??40)*60;
+    if(curE>curS){
+      if(!wins.length){labels.push('⚪ non dispo ce jour');if(level!=='block')level='warn';}
+      else if(!wins.some(w=>w.start<=curS&&w.end>=curE)){labels.push('⚠ hors de sa dispo');if(level!=='block')level='warn';}
+      if(wk)for(const x of wk.result.assignments){if(x===excludeA)continue;if(x.employeeId===emp.id&&x.date===date&&curS<x.end&&curE>x.start){labels.push('⛔ chevauche un quart');level='block';break;}}
+      if(wkMin+(curE-curS)>maxMin){labels.push('⚠ dépasse '+(maxMin/60)+' h/sem');if(level!=='block')level='warn';}
+    }
+    if(level==='ok')labels.unshift('✅ dispo, sans conflit');
+    return {level,labels,wkMin,maxMin};}
+  function render(){clear(listWrap);const scored=emps.map(e=>({e,st:statusOf(e)}));const ord={ok:0,warn:1,block:2};
+    scored.sort((x,y)=>ord[x.st.level]-ord[y.st.level]||(x.e.rank??99)-(y.e.rank??99));
+    if((!selId||!emps.some(e=>e.id===selId))&&scored.length)selId=scored[0].e.id;
+    for(const {e,st} of scored){const r=el('input',{type:'radio',name:'candpick',...(e.id===selId?{checked:true}:{})});r.addEventListener('change',()=>{selId=e.id;});
+      listWrap.appendChild(el('label',{class:'cand-row '+st.level},r,
+        el('span',{class:'cand-name'},e.firstName+' '+e.lastName),
+        el('span',{class:'cand-meta'},'rang '+e.rank+' · '+(st.wkMin/60).toFixed(st.wkMin%60?1:0)+'/'+(st.maxMin/60)+' h'),
+        el('span',{class:'cand-badges'},st.labels.join(' '))));}
+    if(!scored.length)listWrap.appendChild(el('div',{class:'muted small',style:'padding:10px'},'Aucun employé ne fait '+dept.name+'.'));}
+  return {node:listWrap,setTimes:(s,e)=>{curS=s;curE=e;render();},get:()=>selId};}
+// Explique pourquoi les AUTRES employés n'ont pas eu ce quart précis.
+function whyNotOthers(a,dept,date){
+  const ws=mondayOf(date);const dow=dayOfWeek(date);const avail=effectiveAvailability(ws);
+  const wk=(state.lastGenerated||[]).find(w=>w.ws===ws);
+  const others=state.employees.filter(e=>e.id!==a.employeeId&&empDoes(e,dept.key)&&e.active!==false);
+  const g={conge:[],nondispo:[],ailleurs:[],horsplage:[],dispo:[]};
+  for(const e of others){const nm=e.firstName+' '+e.lastName;
+    if((state.timeOff||[]).some(c=>c.employeeId===e.id&&c.start<=date&&date<=(c.end||c.start))){g.conge.push(nm);continue;}
+    let elsew=null;if(wk)for(const x of wk.result.assignments){if(x.employeeId===e.id&&x.date===date){const dp=DEPTS.find(d=>d.id===x.departmentId);elsew=(dp?dp.name:x.departmentId)+' '+minutesToHHMM(x.start)+'–'+minutesToHHMM(x.end);break;}}
+    if(elsew){g.ailleurs.push(nm+' ('+elsew+')');continue;}
+    const wins=(avail[e.id]&&avail[e.id][dow])||[];
+    if(!wins.length){g.nondispo.push(nm);continue;}
+    if(!wins.some(w=>w.start<=a.start&&w.end>=a.end)){g.horsplage.push(nm);continue;}
+    g.dispo.push(nm+' (rang '+e.rank+')');}
+  const sec=el('div',{style:'margin-top:14px;border-top:1px solid var(--line);padding-top:10px'});
+  sec.appendChild(el('div',{style:'font-weight:700;margin-bottom:6px'},'Pourquoi pas les autres ?'));
+  const line=(emoji,label,arr)=>{if(arr.length)sec.appendChild(el('p',{style:'margin:6px 0'},emoji+' '+label+' : ',el('span',{class:'muted'},arr.join(', '))));};
+  line('🌴','En congé ce jour',g.conge);
+  line('⚪','Pas disponible ce jour (dispo/alternance)',g.nondispo);
+  line('🔁','Déjà assignés ailleurs ce jour',g.ailleurs);
+  line('⏰','Disponibles mais pas sur toute cette plage',g.horsplage);
+  line('✅','Disponibles — non retenus car la couverture était déjà comblée (1 personne suffit, priorité au rang le plus fort)',g.dispo);
+  if(!Object.values(g).some(arr=>arr.length))sec.appendChild(el('p',{class:'muted small'},'Aucun autre employé ne fait ce département.'));
+  return sec;}
+function editShiftModal(a,wk,dept,date,onChange){
+  const start=el('input',{type:'time',value:minutesToHHMM(a.start)}),end=el('input',{type:'time',value:minutesToHHMM(a.end)});
+  const picker=candidatePicker(dept,date,wk,a.employeeId,a);
+  const sync=()=>picker.setTimes(hhmmToMin(start.value),hhmmToMin(end.value));
+  start.addEventListener('change',sync);end.addEventListener('change',sync);
+  const content=el('div',{},el('p',{class:'muted small'},dept.name+' — '+DOW[dayOfWeek(date)]+' '+date),
+    el('div',{class:'row'},el('label',{class:'field'},'Début',start),el('label',{class:'field'},'Fin',end)),
+    el('div',{class:'field',style:'margin-top:10px'},'Employé — trié par disponibilité puis rang',picker.node),
+    el('div',{class:'row',style:'margin-top:12px'},
+      el('button',{onClick:()=>explainShift(a,state.employees.find(x=>x.id===a.employeeId),dept,date)},'❔ Pourquoi ce quart'),
+      el('button',{class:'danger',onClick:(ev)=>{if(confirm('Supprimer ce quart ?')){wk.result.assignments=wk.result.assignments.filter(x=>x!==a);ev.currentTarget.closest('.modal-bg').remove();onChange('Quart supprimé.');}}},'🗑️ Supprimer')));
+  sync();
+  modal('Modifier le quart',content,(close)=>{const s=hhmmToMin(start.value),e=hhmmToMin(end.value);if(!(e>s))throw new Error('La fin doit être après le début.');
+    const id=picker.get();if(!id)throw new Error('Choisis un employé.');
+    a.employeeId=id;a.start=s;a.end=e;a._edited=true;delete a._why;close();onChange('Quart modifié.');},'Enregistrer');
+}
+function addShiftModal(wk,dept,date,onChange){
+  const emps=state.employees.filter(x=>empDoes(x,dept.key)&&x.active!==false);
+  if(!emps.length){toast('Aucun employé ne fait '+dept.name+'.',true);return;}
+  const dow=dayOfWeek(date);const oh=state.openingHours[dept.key][dow];
+  const start=el('input',{type:'time',value:minutesToHHMM(oh&&!oh.closed?oh.open:660)}),end=el('input',{type:'time',value:minutesToHHMM(oh&&!oh.closed?oh.close:1320)});
+  const picker=candidatePicker(dept,date,wk,null,null);
+  const sync=()=>picker.setTimes(hhmmToMin(start.value),hhmmToMin(end.value));
+  start.addEventListener('change',sync);end.addEventListener('change',sync);
+  const tpls=(state.shiftTemplates||[]).filter(t=>t.deptKey===dept.key).sort((a,b)=>a.start-b.start);
+  let tplRow=null;
+  if(tpls.length){const tplSel=el('select',{},el('option',{value:''},'— Choisir un modèle —'),...tpls.map(t=>el('option',{value:t.id},t.label+' ('+minutesToHHMM(t.start)+'–'+minutesToHHMM(t.end)+')')));
+    tplSel.addEventListener('change',()=>{const t=tpls.find(x=>x.id===tplSel.value);if(t){start.value=minutesToHHMM(t.start);end.value=minutesToHHMM(t.end);sync();}});
+    tplRow=el('label',{class:'field'},'Modèle (pré-remplit les heures)',tplSel);}
+  const content=el('div',{},el('p',{class:'muted small'},dept.name+' — '+DOW[dayOfWeek(date)]+' '+date),
+    tplRow,
+    el('div',{class:'row',style:tplRow?'margin-top:10px':''},el('label',{class:'field'},'Début',start),el('label',{class:'field'},'Fin',end)),
+    el('div',{class:'field',style:'margin-top:10px'},'Employé — trié par disponibilité puis rang',picker.node));
+  sync();
+  modal('Ajouter un quart',content,(close)=>{const s=hhmmToMin(start.value),e=hhmmToMin(end.value);if(!(e>s))throw new Error('La fin doit être après le début.');
+    const id=picker.get();if(!id)throw new Error('Choisis un employé.');
+    wk.result.assignments.push({employeeId:id,departmentId:dept.id,date,start:s,end:e,_edited:true});close();onChange('Quart ajouté.');},'Ajouter');
+}
+// ---- Grille visuelle : couverture requise vs assignée ----------------------
+function hmLegend(color,txt){return el('span',{class:'muted small',style:'display:inline-flex;align-items:center;gap:5px'},el('span',{style:'width:12px;height:12px;border-radius:3px;display:inline-block;background:'+color+';border:1px solid #cbd5e1'}),txt);}
+function coverageHeatmap(wk,dept){
+  const panel=el('div',{class:'panel'});
+  panel.appendChild(el('h2',{},'📊 Couverture — ',el('span',{class:'tag '+dept.key},dept.name),el('span',{class:'muted small',style:'margin-left:8px'},'requise vs assignée, par 30 min')));
+  panel.appendChild(el('div',{class:'row',style:'gap:14px;margin-bottom:8px'},hmLegend('#dcfce7','Comblé'),hmLegend('#fee2e2','Sous-effectif'),hmLegend('#ffedd5','Sur-effectif'),hmLegend('#f1f5f9','Aucun besoin')));
+  for(const date of wk.weekDates){const dow=dayOfWeek(date);const oh=state.openingHours[dept.key][dow];
+    const row=el('div',{class:'hm-row'});row.appendChild(el('div',{class:'hm-day'},DOW_SHORT?DOW_SHORT[dow]:DOW[dow],el('div',{class:'sub'},frDate(date))));
+    if(!oh||oh.closed){row.appendChild(el('div',{class:'muted small'},'Fermé'));panel.appendChild(row);continue;}
+    const cov=coverageForDate(date);const req=(cov[dept.key]&&cov[dept.key][dow])||{};
+    const shifts=wk.result.assignments.filter(a=>a.departmentId===dept.id&&a.date===date);
+    const cells=el('div',{class:'hm-cells'});
+    for(let t=Math.floor(oh.open/30)*30;t<oh.close;t+=30){const need=req[t]??0;let asg=0;for(const a of shifts)if(a.start<=t&&a.end>t)asg++;
+      let bg='#f1f5f9';if(need>0&&asg>=need)bg=asg>need?'#ffedd5':'#dcfce7';else if(need>0&&asg<need)bg='#fee2e2';else if(need===0&&asg>0)bg='#ffedd5';
+      cells.appendChild(el('div',{class:'hm-cell'+(t%60===0?' hm-hr':''),title:minutesToHHMM(t)+'–'+minutesToHHMM(t+30)+' · requis '+need+' · assigné '+asg,style:'background:'+bg},(need>0||asg>0)?String(asg):''));}
+    row.appendChild(cells);panel.appendChild(row);}
+  return panel;
+}
+function dayTimeline(dept,date,shifts,empById,ctx){
+  const dow=dayOfWeek(date);const oh=state.openingHours[dept.key][dow];
+  const label=el('div',{class:'day-label'},DOW[dow],el('div',{class:'sub'},frDate(date)),
+    ctx?el('button',{class:'sm add-shift',title:'Ajouter un quart',onClick:()=>addShiftModal(ctx.wk,dept,date,ctx.onChange)},'＋ quart'):null);
+  if(!oh||oh.closed)return el('div',{class:'day-row'},label,el('div',{class:'day-closed'},'Fermé'));
+  let mn=oh.open,mx=oh.close;
+  for(const a of shifts){mn=Math.min(mn,a.start);mx=Math.max(mx,a.end);} // englobe un quart qui déborderait
+  const HW=48,startH=Math.floor(mn/60),endH=Math.ceil(mx/60),trackW=(endH-startH)*HW;
+  const {res,lanes}=layoutLanes(shifts);const laneH=24,headH=15,trackH=headH+Math.max(1,lanes)*laneH+2;
+  const track=el('div',{class:'day-track',style:'width:'+trackW+'px;height:'+trackH+'px'});
+  for(let h=startH;h<=endH;h++)track.appendChild(el('div',{class:'day-hour',style:'left:'+((h-startH)*HW)+'px'},el('span',{class:'lab'},String(h).padStart(2,'0')+'h')));
+  for(const {s,lane} of res){const e=empById[s.employeeId];const left=(s.start/60-startH)*HW;const wdt=Math.max(30,(s.end-s.start)/60*HW-2);
+    track.appendChild(el('div',{class:'day-block '+dept.key+(s._edited?' edited':''),title:(e?e.firstName+' '+e.lastName:'?')+' · '+minutesToHHMM(s.start)+'–'+minutesToHHMM(s.end)+(ctx?' — cliquer pour modifier':' — cliquer pour expliquer'),
+      style:'cursor:pointer;left:'+left+'px;top:'+(headH+lane*laneH)+'px;width:'+wdt+'px;height:'+(laneH-3)+'px',onClick:()=> ctx?editShiftModal(s,ctx.wk,dept,date,ctx.onChange):explainShift(s,e,dept,date)},
+      (e?e.firstName:'?')+' '+minutesToHHMM(s.start)+'–'+minutesToHHMM(s.end)));}
+  if(!shifts.length)track.appendChild(el('div',{class:'day-closed',style:'position:absolute;top:'+headH+'px;left:4px'},'—'));
+  return el('div',{class:'day-row'},label,el('div',{class:'day-track-wrap'},track));
+}
+// Grille d'un département : les 7 jours empilés les uns sous les autres.
+function deptDaysStack(dept,weekDates,assignments,empById){
+  const panel=el('div',{class:'panel'},el('h2',{},el('span',{class:'tag '+dept.key},dept.name)));
+  for(const date of weekDates)panel.appendChild(dayTimeline(dept,date,assignments.filter(a=>a.departmentId===dept.id&&a.date===date).sort((a,b)=>a.start-b.start),empById));
+  return panel;
+}
 
-  async function submitPin(pin){
-    try {
-      await api('/api/login', { method: 'POST', body: { pin } });
-      appPin = pin;
-      try { localStorage.setItem('kuto_pin', pin); } catch(e){}
-      document.getElementById('pinError').textContent = '';
-      await afterLogin();
-    } catch(e){
-      document.getElementById('pinError').textContent = 'NIP incorrect';
-      pinBuf = ''; document.getElementById('pinDots').textContent = '○○○○';
+// Alternance : rotation déterministe d'une semaine à l'autre. Pour chaque
+// (département, jour), les employés en alternance se relaient selon le numéro
+// de semaine ; celui « de garde » garde sa disponibilité, les autres sont mis
+// de côté cette semaine-là. Si le titulaire est en congé/indisponible, on prend
+// le suivant dans la rotation ; s'il n'y en a qu'un, il travaille toujours.
+function applyAlternance(availability,weekStart,weekDates,conge){
+  const weekIndex=Math.floor(new Date(weekStart+'T00:00:00Z').getTime()/(7*86400000));
+  const dateByDow={};for(const date of weekDates)dateByDow[dayOfWeek(date)]=date;
+  const onTurn={};
+  for(let dow=0;dow<7;dow++){const date=dateByDow[dow];
+    for(const dept of DEPTS){
+      const members=state.employees.filter(e=>e.active!==false&&empDoes(e,dept.key)&&e.availability&&e.availability[dow]&&e.availability[dow][0]&&e.availability[dow][0].alt).sort((a,b)=>a.rank-b.rank);
+      const n=members.length;if(n===0)continue;const off=((weekIndex%n)+n)%n;
+      for(let i=0;i<n;i++){const m=members[(off+i)%n];
+        const dispo=availability[m.id]&&availability[m.id][dow]&&availability[m.id][dow].length>0&&!conge.has(m.id+'|'+date);
+        if(dispo){onTurn[m.id+'|'+dow]=true;break;}}
     }
   }
+  for(const e of state.employees){for(let dow=0;dow<7;dow++){const w=e.availability&&e.availability[dow]&&e.availability[dow][0];
+    if(w&&w.alt&&!onTurn[e.id+'|'+dow]&&availability[e.id])availability[e.id][dow]=[];}}
+}
 
-  function getSheets(){
-    try { return JSON.parse(localStorage.getItem('kuto_sheets') || '[]'); } catch(e){ return []; }
-  }
-  function saveSheets(arr){
-    try { localStorage.setItem('kuto_sheets', JSON.stringify(arr)); } catch(e){}
-  }
-  function findSavedSheet(date, service){
-    const all = getSheets().filter(s => s.date === date && s.service === service);
-    return all.length ? all[all.length - 1] : null;
-  }
+// Prépare l'horaire pour Presto : noms à l'orthographe Presto, heures AM/PM,
+// département en MAJUSCULES ; copie le tout dans le presse-papier.
+function copyForPresto(weeks){
+  const NAME_MAP={'Djefline Nouma':'Djefline Numa','Gabriella Di':'Gabriella Dee','Abygaelle Sirois':'Abygaëlle Sirois','Jezabel Depault':'Jézabel Depault'};
+  const DEPTUP={kitchen:'CUISINE',service:'SERVICE',plonge:'PLONGE',hotesse:'HÔTESSE'};
+  const empById=Object.fromEntries(state.employees.map(e=>[e.id,e]));
+  const toPresto=(m)=>{let h=Math.floor(m/60),mm=m%60,ap=h<12?'AM':'PM',h12=h%12;if(h12===0)h12=12;return h12+':'+String(mm).padStart(2,'0')+' '+ap;};
+  const shifts=[];
+  for(const wk of weeks)for(const a of wk.result.assignments){const e=empById[a.employeeId];if(!e)continue;const full=e.firstName+' '+e.lastName;
+    shifts.push({name:NAME_MAP[full]||full,date:a.date,start:toPresto(a.start),end:toPresto(a.end),position:DEPTUP[DEPTS.find(d=>d.id===a.departmentId).key]||''});}
+  shifts.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name));
+  // Historique : on enregistre l'envoi pour le rapport « Envois Presto ».
+  state.prestoLog=state.prestoLog||[];
+  state.prestoLog.unshift({id:uid(),copiedAt:nowStamp(),shifts:JSON.parse(JSON.stringify(shifts))});
+  if(state.prestoLog.length>50)state.prestoLog.length=50;
+  save();
+  const json=JSON.stringify(shifts,null,2);
+  const done=()=>toast(shifts.length+' quarts copiés (enregistrés dans « Envois Presto ») — va dans Presto et clique le favori « Importer dans Presto ».');
+  function fallback(){const ta=el('textarea',{style:'position:fixed;left:-9999px'});ta.value=json;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();done();}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(json).then(done).catch(fallback);else fallback();
+}
 
-  async function syncPull(){
-    try {
-      const servers = await api('/api/roster');
-      roster = servers.map(s => ({ id: s.id, name: s.name }));
-      seq = (roster.reduce((m, s) => Math.max(m, s.id), 0) || 0) + 1;
-      const sheets = await api('/api/sheets');
-      saveSheets(sheets);
-    } catch(e){ /* hors-ligne : on garde le cache local */ }
-  }
-
-  async function afterLogin(){
-    document.getElementById('appHeader').style.display = '';
-    await syncPull();
-    await loadPool();
-    await loadSchedule();
-    switchScreen('accueil');
-  }
-
-  async function boot(){
-    buildGrid(document.getElementById('denomGrid'), 'main');
-    buildGrid(document.getElementById('recountGrid'), 'recount');
-    const t = new Date();
-    const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
-    document.getElementById('dateInput').value = iso;
-    document.getElementById('dateInput').addEventListener('change', loadSchedule);
-    try { appPin = localStorage.getItem('kuto_pin') || ''; adminTok = localStorage.getItem('kuto_admin_tok') || ''; } catch(e){}
-    if (appPin){
-      try { await api('/api/roster'); await afterLogin(); return; } catch(e){ appPin = ''; }
-    }
-    switchScreen('pinScreen');
-  }
-
-  async function changePin(){
-    const v = (document.getElementById('newPin').value || '').trim();
-    const msg = document.getElementById('secMsg');
-    if (!/^\d{4}$/.test(v)){ msg.style.color = 'var(--accent)'; msg.textContent = 'NIP = 4 chiffres.'; return; }
-    try { await api('/api/admin/settings', { method: 'POST', admin: true, body: { pin: v } });
-      msg.style.color = 'var(--ok)'; msg.textContent = 'NIP changé.'; document.getElementById('newPin').value = '';
-    } catch(e){ msg.style.color = 'var(--accent)'; msg.textContent = 'Échec.'; }
-  }
-  async function changeAdminPw(){
-    const v = document.getElementById('newAdminPw').value || '';
-    const msg = document.getElementById('secMsg');
-    if (v.length < 6){ msg.style.color = 'var(--accent)'; msg.textContent = 'Mot de passe ≥ 6 caractères.'; return; }
-    try { await api('/api/admin/settings', { method: 'POST', admin: true, body: { adminPassword: v } });
-      msg.style.color = 'var(--ok)'; msg.textContent = 'Mot de passe admin changé.'; document.getElementById('newAdminPw').value = '';
-    } catch(e){ msg.style.color = 'var(--accent)'; msg.textContent = 'Échec.'; }
-  }
-
-  function money(n){
-    return n.toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
-  }
-
-  // ---- Accueil : caisse ----
-  function selectService(s){
-    service = s;
-    document.querySelectorAll('.seg button').forEach(b => {
-      b.classList.toggle('on', b.dataset.service === s);
-    });
-    updateStart();
-  }
-
-  // ---- Accueil : serveurs ----
-  function loadRoster(){
-    try {
-      const raw = localStorage.getItem('kuto_roster');
-      if (raw){ roster = JSON.parse(raw) || []; }
-    } catch(e){ roster = []; }
-    let maxId = 0;
-    roster.forEach(r => { if (r.id > maxId) maxId = r.id; });
-    seq = maxId + 1;
-  }
-  function saveRoster(){
-    try { localStorage.setItem('kuto_roster', JSON.stringify(roster)); } catch(e){}
-  }
-
-  // ---- Accueil : serveurs présents (horaire Presto + failsafe) ----
-  let present = [];        // [{name, id?, time, checked, source:'schedule'|'manual'}]
-  let scheduleList = [];   // horaire brut de la date choisie
-  let pool = [];           // bassin failsafe : personnes Service + managers (Presto)
-
-  function findRosterId(name){
-    const r = roster.find(x => (x.name || '').toLowerCase() === String(name).toLowerCase());
-    return r ? r.id : null;
-  }
-
-  async function loadSchedule(){
-    const date = document.getElementById('dateInput').value;
-    scheduleList = [];
-    try { scheduleList = (await api('/api/schedule?date=' + encodeURIComponent(date))) || []; }
-    catch(e){ scheduleList = []; }
-    // Un même employé peut avoir plusieurs quarts : on dédoublonne par nom
-    const seen = new Set();
-    present = [];
-    scheduleList.forEach(s => {
-      const key = (s.name || '').toLowerCase();
-      if (!s.name || seen.has(key)) return;
-      seen.add(key);
-      present.push({ name: s.name, time: s.time || '', id: findRosterId(s.name), checked: true, source: 'schedule' });
-    });
-    renderPresent();
-    updateStart();
-  }
-
-  function renderPresent(){
-    const list = document.getElementById('serverList');
-    list.innerHTML = '';
-    if (!present.length){
-      list.innerHTML = '<div class="empty-hint">Aucun serveur à l\'horaire pour cette date. Ajoute-les ci-dessous.</div>';
-    } else {
-      present.forEach((p, i) => {
-        const row = document.createElement('div');
-        row.className = 'srv';
-        const tag = p.source === 'manual' ? ' <span class="scard-tag" style="background:var(--muted)">hors horaire</span>' : '';
-        const time = p.time ? ` <span class="srv-time">${escapeHtml(p.time)}</span>` : '';
-        row.innerHTML = `
-          <input type="checkbox" ${p.checked ? 'checked' : ''} onchange="togglePresent(${i})">
-          <span class="nm">${escapeHtml(p.name)}${time}${tag}</span>
-          ${p.source === 'manual' ? `<button type="button" class="del" onclick="removePresent(${i})" aria-label="Retirer">×</button>` : ''}
-        `;
-        list.appendChild(row);
-      });
-    }
-    renderFailsafe();
-  }
-
-  function renderFailsafe(){
-    const box = document.getElementById('failsafeRow');
-    if (!box) return;
-    const used = new Set(present.map(p => (p.name || '').toLowerCase()));
-    const source = (pool && pool.length) ? pool.slice() : roster.map(r => r.name);
-    const opts = source.filter(n => n && !used.has(n.toLowerCase())).sort((a, b) => a.localeCompare(b));
-    box.innerHTML =
-      '<select class="fs-select" onchange="addFailsafe(this.value); this.selectedIndex=0;">' +
-      '<option value="">+ Ajouter un serveur hors horaire…</option>' +
-      opts.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('') +
-      '</select>';
-  }
-
-  async function loadPool(){
-    try { pool = (await api('/api/presto/pool')) || []; } catch(e){ pool = []; }
-  }
-
-  function addFailsafe(name){
-    if (!name) return;
-    present.push({ name: name, id: findRosterId(name), time: '', checked: true, source: 'manual' });
-    renderPresent();
-    updateStart();
-  }
-  function togglePresent(i){ if (present[i]){ present[i].checked = !present[i].checked; updateStart(); } }
-  function removePresent(i){ present.splice(i, 1); renderPresent(); updateStart(); }
-
-  async function refreshSchedule(){
-    const btn = document.getElementById('syncBtn');
-    if (btn){ btn.disabled = true; btn.textContent = '…'; }
-    await syncPull();
-    await loadSchedule();
-    if (btn){
-      btn.textContent = '✓ à jour';
-      setTimeout(() => { btn.textContent = '↻ Synchro'; btn.disabled = false; }, 1400);
-    }
-  }
-
-  // ---- Synchronisation Presto (connexion → récupération de l'horaire) ----
-  async function openPrestoModal(){
-    document.getElementById('prestoMsg').textContent = '';
-    document.getElementById('prestoPass').value = '';
-    try { const r = await api('/api/presto/email'); document.getElementById('prestoEmail').value = r.email || ''; } catch(e){}
-    document.getElementById('prestoModal').classList.add('show');
-    setTimeout(() => {
-      const em = document.getElementById('prestoEmail');
-      (em.value ? document.getElementById('prestoPass') : em).focus();
-    }, 120);
-  }
-  function closePresto(){ document.getElementById('prestoModal').classList.remove('show'); }
-  async function doPrestoSync(){
-    const email = (document.getElementById('prestoEmail').value || '').trim();
-    const password = document.getElementById('prestoPass').value || '';
-    const msg = document.getElementById('prestoMsg');
-    const go = document.getElementById('prestoGo');
-    if (!email || !password){ msg.style.color = 'var(--accent)'; msg.textContent = 'Entre ton courriel et ton mot de passe.'; return; }
-    msg.style.color = 'var(--muted)'; msg.textContent = 'Connexion à Presto…';
-    if (go){ go.disabled = true; go.textContent = '…'; }
-    try {
-      const r = await api('/api/presto/sync', { method: 'POST', body: { email, password } });
-      closePresto();
-      await loadPool();
-      await loadSchedule();
-      const btn = document.getElementById('prestoSyncBtn');
-      if (btn){
-        const n = r.servers ? r.servers.length : 0;
-        const m = (typeof r.pool === 'number') ? r.pool : (pool ? pool.length : 0);
-        btn.textContent = '✓ Horaire à jour (' + n + ' serveurs · ' + m + ' au bassin)';
-        setTimeout(() => { btn.textContent = 'Synchroniser l\'horaire (Presto)'; }, 3500);
-      }
-    } catch(e){
-      const s = String(e);
-      msg.style.color = 'var(--accent)';
-      msg.textContent = s.includes('401') ? 'Courriel ou mot de passe Presto incorrect.' : 'Échec de la synchronisation. Réessaie.';
-    } finally {
-      if (go){ go.disabled = false; go.textContent = 'Synchroniser'; }
-    }
-  }
-
-  // Liste de gestion dans les paramètres (avec suppression)
-  function renderAdminServers(){
-    const list = document.getElementById('adminServerList');
-    list.innerHTML = '';
-    if (roster.length === 0){
-      list.innerHTML = '<div class="empty-hint">Aucun serveur. Ajoute-en un ci-dessous.</div>';
-      return;
-    }
-    roster.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'srv';
-      row.innerHTML = `
-        <span class="nm">${escapeHtml(r.name)}</span>
-        <button type="button" class="del" onclick="removeServer(${r.id})" aria-label="Retirer">×</button>
-      `;
-      list.appendChild(row);
-    });
-  }
-
-  async function addServer(){
-    const inp = document.getElementById('newServer');
-    const name = (inp.value || '').trim();
-    if (!name) return;
-    try {
-      const item = await api('/api/roster', { method: 'POST', admin: true, body: { name } });
-      roster.push({ id: item.id, name: item.name });
-      inp.value = '';
-      renderAdminServers();
-      renderFailsafe();
-      inp.focus();
-    } catch(e){ console.error('Ajout serveur impossible', e); }
-  }
-
-  async function removeServer(id){
-    try {
-      await api('/api/roster/' + id, { method: 'DELETE', admin: true });
-      roster = roster.filter(r => r.id !== id);
-      renderAdminServers();
-      renderFailsafe();
-      updateStart();
-    } catch(e){ console.error('Retrait serveur impossible', e); }
-  }
-
-  // ---- Paramètres (accès admin protégé côté serveur) ----
-  function openSettings(){
-    const inp = document.getElementById('pwInput');
-    inp.value = '';
-    document.getElementById('pwError').textContent = '';
-    document.getElementById('pwModal').classList.add('show');
-    setTimeout(() => inp.focus(), 100);
-  }
-  function closePw(){ document.getElementById('pwModal').classList.remove('show'); }
-  async function checkPw(){
-    const v = document.getElementById('pwInput').value;
-    try {
-      const r = await api('/api/admin/login', { method: 'POST', body: { password: v } });
-      adminTok = r.token;
-      try { localStorage.setItem('kuto_admin_tok', adminTok); } catch(e){}
-      closePw();
-      await syncPull();
-      renderAdminServers();
-      switchScreen('settings');
-    } catch(e){
-      document.getElementById('pwError').textContent = 'Mot de passe incorrect.';
-      document.getElementById('pwInput').value = '';
-    }
-  }
-  function closeSettings(){ switchScreen('accueil'); }
-
-  function updateStart(){
-    const ok = !!service && present.some(p => p.checked);
-    document.getElementById('startBtn').disabled = !ok;
-  }
-
-  function escapeHtml(s){
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function startSaisie(){
-    const d = document.getElementById('dateInput').value;
-    shiftServers = present.filter(p => p.checked).map(p => ({ id: p.id, name: p.name }));
-    document.getElementById('ctxDate').textContent = formatDate(d);
-    const n = shiftServers.length;
-    document.getElementById('ctxService').textContent =
-      (service === 'midi' ? 'Caisse du midi' : 'Caisse du soir') + ' · ' + n + ' serveur' + (n > 1 ? 's' : '');
-    switchScreen('saisie');
-  }
-
-  function goHome(){ closeKeypad(); switchScreen('accueil'); }
-
-  // ---- Pavé numérique ----
-  let activeInput = null;
-  let kpMode = 'int';   // 'int' pour quantités, 'money' pour montants
-  let activeFresh = false;   // 1re frappe après sélection = remplace la valeur
-
-  function openKeypad(inp){
-    if (activeInput) activeInput.classList.remove('active');
-    activeInput = inp;
-    kpMode = inp.dataset.mode || 'int';   // 'int' | 'money' | 'hours'
-    activeFresh = true;
-    inp.classList.add('active');
-    const lbl = inp.dataset.label || '';
-    document.getElementById('kpLabel').textContent =
-      kpMode === 'money' ? lbl :
-      kpMode === 'hours' ? ('Heures : ' + lbl) :
-      ('Coupure : ' + lbl);
-    document.getElementById('kpAlt').textContent = kpMode === 'int' ? 'C' : ',';
-    document.getElementById('kpSign').style.display =
-      (kpMode === 'money' && inp.dataset.nosign !== '1') ? '' : 'none';
-    document.getElementById('keypad').classList.add('show');
-    document.body.classList.add('keypad-open');
-    setTimeout(() => inp.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
-  }
-
-  function closeKeypad(){
-    if (activeInput) activeInput.classList.remove('active');
-    activeInput = null;
-    document.getElementById('keypad').classList.remove('show');
-    document.body.classList.remove('keypad-open');
-  }
-
-  // OK : passe au champ suivant du même écran ; ferme si c'était le dernier
-  function okNext(){
-    if (!activeInput){ closeKeypad(); return; }
-    const screen = activeInput.closest('.screen');
-    const fields = screen ? Array.from(screen.querySelectorAll('input[readonly][inputmode="none"]')) : [];
-    const idx = fields.indexOf(activeInput);
-    if (idx >= 0 && idx < fields.length - 1) openKeypad(fields[idx + 1]);
-    else closeKeypad();
-  }
-
-  function keyAlt(){
-    // Touche bas-gauche : « , » en mode montant, « C » en mode quantité
-    if (kpMode === 'money') keyPress(',');
-    else keyPress('clear');
-  }
-
-  function keyPress(k){
-    if (!activeInput) return;
-    // 1re frappe de contenu après sélection : on remplace la valeur existante
-    const isContent = /^[0-9]$/.test(k) || k === ',';
-    if (activeFresh && isContent) activeInput.value = '';
-    activeFresh = false;
-
-    let v = activeInput.value || '';
-
-    if (kpMode === 'int'){
-      v = v.replace(/[^0-9]/g, '');
-      if (k === 'del') v = v.slice(0, -1);
-      else if (k === 'clear') v = '';
-      else if (v.length < 5) v += k;
-      activeInput.value = v;
-      if (activeInput.dataset.key === 'recount') recalcRecount(); else recalc();
-      return;
-    }
-
-    // Modes décimaux : 'money' ($) et 'hours' (h)
-    const suffix = kpMode === 'money' ? ' $' : ' h';
-    v = v.replace(/[\s$h]/g, '');
-    let neg = v.startsWith('-');
-    let body = neg ? v.slice(1) : v;
-    if (k === 'del') body = body.slice(0, -1);
-    else if (k === 'clear'){ body = ''; neg = false; }
-    else if (k === ','){
-      if (!body.includes(',')) body = (body === '' ? '0' : body) + ',';
-    } else { // chiffre
-      const parts = body.split(',');
-      if (parts.length === 2 && parts[1].length >= 2) { /* max 2 décimales */ }
-      else if (body.replace(/[^0-9]/g,'').length < 9) body += k;
-    }
-    if (kpMode === 'hours') neg = false;   // pas de négatif pour les heures
-    activeInput.value = body ? (neg ? '-' : '') + body + suffix : (neg ? '-' : '');
-    if (kpMode === 'money' && activeInput.id === 'retourInput') recalcCascade();
-    if (activeInput.dataset.role === 'taken') recomputeRetrait();
-  }
-
-  function parseMoney(s){
-    if (!s) return 0;
-    let str = String(s).replace(/\s|\$/g,'');
-    const neg = str.startsWith('-') || str.includes('−');
-    str = str.replace(',', '.').replace(/[^0-9.]/g,'');
-    let n = parseFloat(str);
-    if (isNaN(n)) n = 0;
-    return neg ? -n : n;
-  }
-
-  function keySign(){
-    if (kpMode !== 'money' || !activeInput) return;
-    let v = (activeInput.value || '').replace(/\s|\$/g, '');
-    let neg = v.startsWith('-');
-    let body = neg ? v.slice(1) : v;
-    neg = !neg;
-    activeInput.value = body ? (neg ? '-' : '') + body + ' $' : (neg ? '-' : '');
-    recalcCascade();
-  }
-
-  function switchScreen(id){
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    window.scrollTo(0,0);
-  }
-
-  function formatDate(iso){
-    if(!iso) return '—';
-    const [y,m,dd] = iso.split('-').map(Number);
-    const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    return dd + ' ' + mois[m-1] + ' ' + y;
-  }
-
-  // ---- Grille de saisie ----
-  // Grille réutilisable : pièces (< 5 $) à gauche, billets à droite
-  function buildGrid(gridEl, key){
-    gridEl.innerHTML = '';
-    const coins = document.createElement('div'); coins.className = 'col';
-    const bills = document.createElement('div'); bills.className = 'col';
-    DENOMS.forEach((d, i) => {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.innerHTML = `
-        <input class="qty" type="text" inputmode="none" readonly placeholder="0" data-key="${key}" data-i="${i}" data-label="${d.label}" onclick="openKeypad(this)">
-        <span class="x">×</span>
-        <span class="den"><b>${d.label}</b> <span class="amt" id="${key}-amt-${i}"><span class="z">= 0,00 $</span></span></span>
-      `;
-      (d.v < 5 ? coins : bills).appendChild(row);
-    });
-    gridEl.appendChild(coins);
-    gridEl.appendChild(bills);
-  }
-
-  function recalcKey(key){
-    let total = 0;
-    DENOMS.forEach((d, i) => {
-      const inp = document.querySelector(`.qty[data-key="${key}"][data-i="${i}"]`);
-      if (!inp) return;
-      let q = parseInt((inp.value || '').replace(/[^0-9]/g,''), 10);
-      if (isNaN(q)) q = 0;
-      const amt = q * d.v;
-      total += amt;
-      const cell = document.getElementById(key + '-amt-' + i);
-      if (cell) cell.innerHTML = q > 0 ? '= ' + money(amt) : '<span class="z">= 0,00 $</span>';
-    });
-    return total;
-  }
-
-  function recalc(){
-    liveCaisseTotal = recalcKey('main');
-    document.getElementById('grandTotal').textContent = money(liveCaisseTotal);
-  }
-
-  function recalcRecount(){
-    const t = recalcKey('recount');
-    document.getElementById('recountTotal').textContent = money(t);
-    const st = document.getElementById('recountStatus');
-    const diff = Math.round((t - CAISSE_FLOAT) * 100) / 100;
-    if (Math.abs(diff) < 0.005){
-      st.className = 'status ok';
-      st.textContent = '✓ La caisse est à 200,00 $.';
-      if (currentSheet){ currentSheet.recountOk = true; }
-    } else {
-      st.className = 'status warn';
-      st.textContent = (diff > 0 ? '✗ Surplus de ' : '✗ Manque de ') + money(Math.abs(diff)) + ' — la caisse n\'est pas à 200,00 $.';
-      if (currentSheet){ currentSheet.recountOk = false; }
-    }
-    if (currentSheet){ currentSheet.recountTotal = t; }
-  }
-
-  // ---- Détail des coupures (pour le rapport) ----
-  function captureDenoms(key){
-    return DENOMS.map((d, i) => {
-      const inp = document.querySelector(`.qty[data-key="${key}"][data-i="${i}"]`);
-      let q = parseInt(((inp && inp.value) || '').replace(/[^0-9]/g,''), 10);
-      if (isNaN(q)) q = 0;
-      return { v: d.v, label: d.label, qty: q, amt: q * d.v };
-    });
-  }
-
-  // ---- Confirmation d'enregistrement de la caisse ----
-  function askSaveCaisse(){
-    document.getElementById('confirmTotal').textContent = money(liveCaisseTotal);
-    document.getElementById('confirmModal').classList.add('show');
-  }
-  function closeConfirm(){
-    // Non : on reste sur la page de calcul
-    document.getElementById('confirmModal').classList.remove('show');
-  }
-  function confirmSaveCaisse(){
-    // Oui : on fige le total et on passe à l'étape 2
-    caisseTotal = liveCaisseTotal;
-    caisseDenoms = captureDenoms('main');
-    document.getElementById('confirmModal').classList.remove('show');
-    document.getElementById('ctxDate2').textContent = document.getElementById('ctxDate').textContent;
-    document.getElementById('ctxService2').textContent = document.getElementById('ctxService').textContent;
-    recalcCascade();
-    switchScreen('etape2');
-  }
-
-  // ---- Étape 2 : cascade ----
-  function recalcCascade(){
-    const retour = parseMoney(document.getElementById('retourInput').value);
-    const sousTotal = caisseTotal - CAISSE_FLOAT - retour;
-    document.getElementById('c2Total').textContent = money(caisseTotal);
-    document.getElementById('c2SousTotal').textContent = money(sousTotal);
-  }
-
-  async function continueEtape3(){
-    closeKeypad();
-    const date = document.getElementById('dateInput').value;
-    const retourEntered = parseMoney(document.getElementById('retourInput').value);
-
-    // Si une caisse du midi a été enregistrée pour la même date, on récupère sa feuille (serveur)
-    midiSheetForShift = null;
-    if (service === 'soir'){
-      try { midiSheetForShift = await api('/api/sheets/find?date=' + encodeURIComponent(date) + '&service=midi'); }
-      catch(e){ midiSheetForShift = findSavedSheet(date, 'midi'); }
-    }
-    const midiRetour = (midiSheetForShift && midiSheetForShift.retourEntered) ? midiSheetForShift.retourEntered : 0;
-    const retour = retourEntered - midiRetour;         // retour comptant effectif
-    const excedent = caisseTotal - CAISSE_FLOAT;
-    const totalPourboire = excedent - retour;
-    const depot = excedent - totalPourboire;
-
-    // Contexte
-    document.getElementById('ctxDate3').textContent = document.getElementById('ctxDate').textContent;
-    document.getElementById('ctxService3').textContent = document.getElementById('ctxService').textContent;
-
-    // Affichage du calcul (transparent)
-    document.getElementById('r3Solde').textContent = money(caisseTotal);
-    document.getElementById('r3Excedent').textContent = money(excedent);
-    document.getElementById('r3Retour').textContent = money(retourEntered);
-    const midiRow = document.getElementById('r3MidiRow');
-    if (midiRetour !== 0){
-      midiRow.style.display = 'flex';
-      document.getElementById('r3MidiRetour').textContent = money(midiRetour);
-    } else {
-      midiRow.style.display = 'none';
-    }
-    document.getElementById('r3Pourboire').textContent = money(totalPourboire);
-
-    // Dépôt : dès qu'il y a un dépôt à faire (retour comptant effectif positif)
-    const depotAmount = retour > 0 ? retour : 0;
-    const depotBox = document.getElementById('r3DepotBox');
-    if (depotAmount > 0){
-      depotBox.style.display = 'flex';
-      document.getElementById('r3Depot').textContent = money(depotAmount);
-    } else {
-      depotBox.style.display = 'none';
-    }
-
-    // Suffisance : argent disponible = excédent (solde − 200)
-    const available = excedent;
-    const sufficient = retour >= 0;
-    const shortfall = sufficient ? 0 : (totalPourboire - available);
-
-    // État courant (sera enregistré à l'étape suivante)
-    currentSheet = {
-      date: date,
-      service: service,
-      denoms: caisseDenoms,
-      caisseTotal: caisseTotal,
-      retourEntered: retourEntered,
-      midiRetour: midiRetour,
-      retour: retour,
-      excedent: excedent,
-      totalPourboire: totalPourboire,
-      depot: depotAmount,
-      available: available,
-      sufficient: sufficient,
-      shortfall: shortfall,
-      midiSheetId: null,
-      servers: shiftServers.map(s => ({ id: s.id, name: s.name, hours: 0, owed: 0, taken: 0, reste: 0, carryover: false }))
-    };
-
-    // Report des serveurs du midi non payés (reste > 0) qui ne travaillent pas le soir
-    if (service === 'soir' && midiSheetForShift){
-      const midi = midiSheetForShift;
-      if (Array.isArray(midi.servers)){
-        currentSheet.midiSheetId = midi.id;
-        midi.servers.forEach(ms => {
-          const reste = ms.reste || 0;
-          if (reste > 0.005 && !currentSheet.servers.some(s => s.id === ms.id || s.name === ms.name)){
-            currentSheet.servers.push({ id: ms.id, name: ms.name, hours: 0, owed: reste, taken: 0, reste: reste, carryover: true, midiReste: reste });
-          }
-        });
+// ---- Vue : Horaire ---------------------------------------------------------
+// ---- Périodes non couvertes (le seul avertissement affiché) ----------------
+const MOIS_FR=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function frDateLong(s){const d=new Date(s+'T00:00:00Z');return DOW[d.getUTCDay()]+' '+d.getUTCDate()+' '+MOIS_FR[d.getUTCMonth()];}
+// Fusionne les créneaux 30 min non couverts en plages continues, par département et jour.
+function mergeUnmet(unmet){const byKey={};for(const u of unmet){const k=u.departmentId+'|'+u.date;(byKey[k]=byKey[k]||[]).push(u);}
+  const out=[];for(const k of Object.keys(byKey)){const arr=byKey[k].slice().sort((a,b)=>a.hour-b.hour);const p=k.split('|');const departmentId=p[0],date=p[1];
+    const ranges=[];let cur=null;for(const u of arr){if(cur&&u.hour===cur.end){cur.end=u.hour+30;cur.min=Math.min(cur.min,u.missing);cur.max=Math.max(cur.max,u.missing);}else{if(cur)ranges.push(cur);cur={start:u.hour,end:u.hour+30,min:u.missing,max:u.missing};}}
+    if(cur)ranges.push(cur);out.push({departmentId,date,ranges});}
+  return out;}
+// Comble les trous d'une semaine avec d'AUTRES employés disponibles (jamais celui déjà présent ce jour-là).
+// Respecte : disponibilité effective, congés, 1 quart/jour, heures max/sem., jours max/sem., heures d'ouverture.
+function fillWeek(wk,onChange){
+  const avail=effectiveAvailability(wk.ws);let added=0,guard=0;
+  while(guard++<300){
+    recomputeUnmet(wk);const periods=mergeUnmet(wk.result.unmet||[]);if(!periods.length)break;let placed=false;
+    for(const per of periods){const dept=DEPTS.find(d=>d.id===per.departmentId);const dow=dayOfWeek(per.date);const oh=state.openingHours[dept.key][dow];if(!oh||oh.closed)continue;
+      for(const r of per.ranges){
+        const cands=state.employees.filter(e=>empDoes(e,dept.key)&&e.active!==false)
+          .filter(e=>!(state.timeOff||[]).some(c=>c.employeeId===e.id&&c.start<=per.date&&per.date<=(c.end||c.start)))
+          .filter(e=>!wk.result.assignments.some(a=>a.employeeId===e.id&&a.date===per.date)) // 1 quart/jour ET « pas la même personne »
+          .filter(e=>{const days=new Set(wk.result.assignments.filter(a=>a.employeeId===e.id).map(a=>a.date));return days.size<(e.maxDaysPerWeek??7);})
+          .filter(e=>{const wins=(avail[e.id]&&avail[e.id][dow])||[];return wins.some(w=>w.start<r.end&&w.end>r.start);})
+          .sort((a,b)=>(a.rank??99)-(b.rank??99));
+        if(!cands.length)continue;const e=cands[0];const wins=(avail[e.id]&&avail[e.id][dow])||[];
+        let best=null;for(const w of wins){const s=Math.max(w.start,r.start,oh.open),en=Math.min(w.end,r.end,oh.close);if(en>s&&(!best||en-s>best.en-best.s))best={s,en};}
+        if(!best)continue;
+        let wkMin=0;for(const a of wk.result.assignments)if(a.employeeId===e.id)wkMin+=a.end-a.start;
+        const maxMin=(e.maxHoursPerWeek??40)*60;if(wkMin+(best.en-best.s)>maxMin){best.en=best.s+(maxMin-wkMin);}
+        if(best.en-best.s<30)continue; // rien d'utile à placer
+        wk.result.assignments.push({employeeId:e.id,departmentId:dept.id,date:per.date,start:best.s,end:best.en,_edited:true,_filled:true});
+        added++;placed=true;
       }
     }
-
-    // Maximum à prendre en comptant = min(total des dûs, excédent physique)
-    const carryTotal = currentSheet.servers.filter(s => s.carryover).reduce((a, s) => a + s.owed, 0);
-    const cashTip = Math.max(0, Math.min(totalPourboire + carryTotal, excedent));
-    currentSheet.cashTip = cashTip;
-    document.getElementById('r3CashTip').textContent = money(cashTip);
-
-    updateStatusBanner();
-    switchScreen('etape3');
+    if(!placed)break;
   }
-
-  // ---- Statut suffisant / insuffisant (étape 3) ----
-  function updateStatusBanner(){
-    const banner = document.getElementById('r3Status');
-    if (currentSheet.sufficient){
-      banner.className = 'status ok';
-      banner.textContent = '✓ La caisse couvre les pourboires.';
-    } else {
-      banner.className = 'status warn';
-      banner.textContent = '⚠ Argent insuffisant — seul l\'excédent (' + money(currentSheet.available)
-        + ') peut être pris · reste dû : ' + money(currentSheet.shortfall) + '.';
+  onChange(added>0?(added+' quart(s) ajouté(s) pour combler les trous.'):'Aucun autre employé disponible pour combler les trous restants.');
+}
+// Panneau listant UNIQUEMENT les périodes de couverture non comblées (rien si tout est couvert).
+function uncoveredPanel(weeks,onFill){
+  const perWeek=weeks.map(wk=>({wk,items:mergeUnmet(wk.result.unmet||[])}));
+  if(!perWeek.some(r=>r.items.length))return null;
+  const panel=el('div',{class:'panel',style:'border-color:#fca5a5;background:#fff7f7'});
+  panel.appendChild(el('h2',{style:'color:#b91c1c;margin-bottom:8px'},'⚠ Périodes non couvertes'));
+  for(const {wk,items} of perWeek){if(!items.length)continue;
+    panel.appendChild(el('div',{class:'row',style:'align-items:center;justify-content:space-between;flex-wrap:nowrap;margin:10px 0 4px'},
+      el('div',{style:'color:#b91c1c;font-weight:700'},'⚠ Semaine du '+wk.ws),
+      onFill?el('button',{class:'sm',style:'background:#fef2f2;color:#b91c1c;border-color:#fca5a5',title:'Assigne d’autres employés disponibles aux plages non couvertes de cette semaine',onClick:()=>onFill(wk)},'🧩 Combler (autres dispo)'):null));
+    items.sort((a,b)=>a.date.localeCompare(b.date)|| (DEPTS.findIndex(d=>d.id===a.departmentId)-DEPTS.findIndex(d=>d.id===b.departmentId)));
+    for(const it of items){const dept=DEPTS.find(d=>d.id===it.departmentId);
+      const txt=it.ranges.map(r=>minutesToHHMM(r.start)+'–'+minutesToHHMM(r.end)+((r.max>1||r.min>1)?' (manque '+(r.min===r.max?r.min:r.min+'–'+r.max)+')':'')).join(', ');
+      panel.appendChild(el('div',{style:'margin:5px 0'},el('span',{class:'tag '+dept.key},dept.name),el('span',{style:'margin-left:8px;font-weight:600'},frDateLong(it.date)+' : '),el('span',{},txt)));}
+  }
+  return panel;}
+function viewSchedule(){
+  const root=el('div',{});
+  const out=el('div',{});
+  let selDeptId=DEPTS[0].id; // département sélectionné, conservé entre les re-rendus (édition manuelle)
+  const weekInput=el('input',{type:'date',value:state.weekStart||mondayOf(todayStr())});
+  const weeksSel=el('select',{},...[1,2,3,4].map(n=>el('option',{value:n,...(n===(state.weeksToGen||1)?{selected:true}:{})},n+(n>1?' semaines':' semaine'))));
+  root.appendChild(el('div',{class:'page-head'},
+    el('div',{},el('h1',{},'Horaire'),el('p',{},'Génère une ou plusieurs semaines, révise, puis approuve.')),
+    el('div',{class:'row'},
+      el('label',{class:'field'},'Semaine du (lundi)',weekInput),
+      el('label',{class:'field'},'Nombre de semaines',weeksSel),
+      el('button',{class:'primary',onClick:run},'⚡ Générer l’horaire'))));
+  // Génère une semaine (moteur + congés + alternance + dispos supp.).
+  function generateWeek(ws){
+    const weekDates=weekDatesFrom(ws);
+    const availability={};for(const e of state.employees){availability[e.id]={};for(let d=0;d<7;d++)availability[e.id][d]=(e.availability&&e.availability[d])||[];}
+    const employees=state.employees.map(e=>({...e,departments:DEPTS.filter(d=>empDoes(e,d.key)).map(d=>d.key)}));
+    const openingHoursByDate={},coverageByDate={};
+    for(const date of weekDates){const dow=dayOfWeek(date);openingHoursByDate[date]={};coverageByDate[date]={};const cov=coverageForDate(date);
+      for(const dept of DEPTS){const oh=state.openingHours[dept.key][dow];openingHoursByDate[date][dept.id]=(oh&&!oh.closed)?{open:oh.open,close:oh.close}:null;
+        coverageByDate[date][dept.id]=(cov[dept.key]&&cov[dept.key][dow])||{};}}
+    const timeOff=[];for(const c of(state.timeOff||[])){for(const date of weekDates){if(c.start<=date&&date<=(c.end||c.start))timeOff.push({employeeId:c.employeeId,date});}}
+    const conge=new Set(timeOff.map(t=>t.employeeId+'|'+t.date));
+    applyAlternance(availability,ws,weekDates,conge);
+    for(const x of(state.extraAvail||[])){if(weekDates.indexOf(x.date)>=0){const dow=dayOfWeek(x.date);
+      availability[x.employeeId]=availability[x.employeeId]||{};availability[x.employeeId][dow]=(availability[x.employeeId][dow]||[]).concat([{start:x.start,end:x.end}]);}}
+    const r=generateSchedule({weekDates,departments:DEPTS,employees,availability,timeOff,openingHoursByDate,coverageByDate,options:state.settings});
+    return {ws,weekDates,result:r};
+  }
+  function placeholder(){return el('div',{class:'panel muted'},'Choisis une semaine, le nombre de semaines, puis clique « Générer l’horaire ». L’horaire reste affiché jusqu’à ce que tu en génères un autre ou cliques « Effacer ».');}
+  function clearGenerated(){state.lastGenerated=null;save();clear(out);out.appendChild(placeholder());toast('Horaire effacé.');}
+  function run(){
+    const ws=mondayOf(weekInput.value||todayStr());const n=Number(weeksSel.value)||1;
+    state.weekStart=ws;state.weeksToGen=n;
+    const weeks=[];for(let i=0;i<n;i++)weeks.push(generateWeek(addDays(ws,i*7)));
+    state.lastGenerated=weeks;save();
+    renderResults(weeks);
+  }
+  function renderResults(weeks){
+    for(const wk of weeks)recomputeUnmet(wk); // recalcule les trous avec la règle « hors ouverture ignorée » même pour un horaire déjà généré
+    const wrap=el('div',{});const n=weeks.length;
+    const empById=Object.fromEntries(state.employees.map(e=>[e.id,e]));
+    const bar=el('div',{class:'row',style:'align-items:center;margin-bottom:12px'},
+      el('span',{class:'badge DRAFT'},'Brouillon'),
+      el('span',{class:'muted small'},n+' semaine(s) — du '+weeks[0].ws+' au '+weeks[n-1].weekDates[6]),
+      el('div',{class:'spacer'}),
+      el('button',{onClick:()=>copyForPresto(weeks)},'📋 Copier pour Presto'),
+      el('button',{class:'ok',onClick:function(){this.textContent='✓ Approuvé';bar.querySelector('.badge').className='badge APPROVED';bar.querySelector('.badge').textContent='Approuvé';toast('Horaire approuvé.');}},'✓ Approuver'),
+      el('button',{class:'danger',onClick:()=>{if(confirm('Effacer TOUT l’horaire affiché (toutes les semaines, tous les départements) ?'))clearGenerated();}},'🗑️ Effacer tout'));
+    wrap.appendChild(bar);
+    const uc=uncoveredPanel(weeks,(wk)=>fillWeek(wk,afterEdit));if(uc)wrap.appendChild(uc);
+    const deptSel=el('select',{},...DEPTS.map(d=>el('option',{value:d.id,...(d.id===selDeptId?{selected:true}:{})},d.name)));
+    const gridWrap=el('div',{});
+    function afterEdit(msg){recomputeHours(weeks);state.lastGenerated=weeks;save();renderResults(weeks);if(msg)toast(msg);}
+    function drawGrids(){clear(gridWrap);const dept=DEPTS.find(d=>d.id===deptSel.value)||DEPTS[0];selDeptId=dept.id;
+      for(const wk of weeks){const sec=el('div',{class:'panel'});
+        sec.appendChild(el('div',{class:'row',style:'align-items:center;justify-content:space-between;flex-wrap:nowrap'},
+          el('h2',{style:'margin:0'},el('span',{class:'tag '+dept.key},dept.name),el('span',{class:'muted small',style:'margin-left:8px'},'Semaine du '+wk.ws),el('span',{class:'muted small',style:'margin-left:8px'},'· clique un quart pour le modifier')),
+          el('button',{class:'sm danger',title:'Efface seulement '+dept.name+' pour cette semaine',onClick:()=>{if(confirm('Effacer les quarts de '+dept.name+' pour la semaine du '+wk.ws+' ?\n(Les autres départements et les autres semaines ne sont pas touchés.)')){wk.result.assignments=wk.result.assignments.filter(a=>a.departmentId!==dept.id);afterEdit('Quarts de '+dept.name+' effacés pour la semaine du '+wk.ws+'.');}}},'🗑️ Effacer '+dept.name+' (cette semaine)')));
+        for(const date of wk.weekDates)sec.appendChild(dayTimeline(dept,date,wk.result.assignments.filter(a=>a.departmentId===dept.id&&a.date===date).sort((a,b)=>a.start-b.start),empById,{wk,onChange:afterEdit}));
+        gridWrap.appendChild(sec);
+        gridWrap.appendChild(coverageHeatmap(wk,dept));}
     }
+    deptSel.addEventListener('change',drawGrids);
+    wrap.appendChild(el('div',{class:'row',style:'margin:2px 0 8px'},el('label',{class:'field'},'Département',deptSel)));
+    wrap.appendChild(gridWrap);drawGrids();
+    const ht=el('table',{},el('thead',{},el('tr',{},el('th',{},'Employé'),el('th',{},'Rang'),el('th',{},'Heures'),el('th',{},'Cible'),el('th',{},'Taux'),el('th',{},'Coût'))));
+    const hb=el('tbody',{});
+    let totMin=0,totCost=0,anyRate=false;
+    for(const e of state.employees){let m=0;for(const wk of weeks)m+=wk.result.employeeHours[e.id]||0;
+      if(m<=0)continue; // n'affiche que les employés qui travaillent cette période
+      const minT=(e.minHoursPerWeek??0)*n,maxT=(e.maxHoursPerWeek??40)*n,h=m/60;
+      let hStyle='';if(h<minT-1e-9)hStyle='color:var(--bad);font-weight:700';else if(h>maxT+1e-9)hStyle='color:var(--warn);font-weight:700';
+      const rate=(e.hourlyRate==null?null:+e.hourlyRate);const cost=rate!=null?h*rate:null;
+      if(rate!=null){totCost+=cost;anyRate=true;}totMin+=m;
+      hb.appendChild(el('tr',{},el('td',{},e.firstName+' '+e.lastName),el('td',{},String(e.rank)),
+        el('td',{class:'pill-hours',style:hStyle,title:(h<minT?'Sous le minimum':(h>maxT?'Au-dessus du maximum':''))},h.toFixed(m%60?1:0)+' h'),
+        el('td',{class:'muted small'},minT+'–'+maxT+' h'),
+        el('td',{class:'small'},rate!=null?rate.toFixed(2)+' $':'—'),
+        el('td',{class:'small'},cost!=null?cost.toFixed(2)+' $':'—')));}
+    hb.appendChild(el('tr',{style:'border-top:2px solid var(--line);font-weight:700'},el('td',{},'Total'),el('td',{},''),
+      el('td',{},(totMin/60).toFixed(totMin%60?1:0)+' h'),el('td',{},''),el('td',{},''),
+      el('td',{},anyRate?totCost.toFixed(2)+' $'+(n>1?' ('+(totCost/n).toFixed(2)+' $/sem.)':''):'—')));
+    ht.appendChild(hb);
+    const costNote=anyRate?el('p',{class:'muted small'},'Coût estimé de main-d’œuvre. Ajoute un taux horaire par employé (fiche employé) pour compléter le calcul.'):el('p',{class:'muted small'},'Astuce : ajoute un « Taux horaire » dans chaque fiche employé pour voir le coût de main-d’œuvre ici.');
+    wrap.appendChild(el('div',{class:'panel'},el('h2',{},'Heures et coût par employé'+(n>1?' (cumul '+n+' semaines)':'')),ht,costNote));
+    out.replaceChildren(wrap);
   }
+  root.appendChild(out);
+  if(state.lastGenerated&&state.lastGenerated.length)renderResults(state.lastGenerated);
+  else out.appendChild(placeholder());
+  return root;}
 
-  // ---- Retrait : à plusieurs, on demande les heures d'abord (page dédiée) ----
-  function goRetrait(){
-    document.getElementById('ctxDateRt').textContent = document.getElementById('ctxDate').textContent;
-    document.getElementById('ctxServiceRt').textContent = document.getElementById('ctxService').textContent;
-    document.getElementById('rtCashTip').textContent = money(currentSheet.cashTip);
-    document.getElementById('rtTotalDu').textContent = money(currentSheet.totalPourboire);
+// ---- Vue : Employés --------------------------------------------------------
+function availEditor(emp){
+  const rows=[];const wrap=el('div',{});
+  for(const d of DOW_ORDER){const w=(emp.availability&&emp.availability[d]&&emp.availability[d][0])||null;
+    const chk=el('input',{type:'checkbox',...(w?{checked:true}:{})});
+    const start=el('input',{type:'time',value:minutesToHHMM(w?w.start:480)});
+    const end=el('input',{type:'time',value:minutesToHHMM(w?Math.min(w.end,1439):1439)});
+    const alt=el('input',{type:'checkbox',...(w&&w.alt?{checked:true}:{})});
+    wrap.appendChild(el('div',{class:'row',style:'align-items:center;gap:8px;margin:4px 0'},
+      el('label',{class:'check',style:'width:104px'},chk,DOW[d]),el('span',{class:'muted small'},'de'),start,el('span',{class:'muted small'},'à'),end,
+      el('label',{class:'check',style:'margin-left:8px'},alt,'Alternance')));
+    rows.push({d,chk,start,end,alt});}
+  return{node:el('div',{},el('div',{class:'muted small',style:'margin-bottom:6px'},'Coche les jours de disponibilité et la plage horaire. « Alternance » : l’employé se relaie une semaine sur l’autre avec les autres en alternance sur le même département (s’il est le seul disponible, il travaille).'),wrap),
+    get:()=>{const av={};for(const r of rows)if(r.chk.checked)av[r.d]=[{start:hhmmToMin(r.start.value),end:hhmmToMin(r.end.value),alt:r.alt.checked}];return av;}};
+}
+function editEmployee(emp,isNew){
+  const fn=el('input',{value:emp.firstName||''}),ln=el('input',{value:emp.lastName||''});
+  const rank=el('input',{type:'number',value:emp.rank??100,min:1});
+  const active=el('input',{type:'checkbox',...(emp.active!==false?{checked:true}:{})});
+  const deptChecks=DEPTS.map(d=>({d,input:el('input',{type:'checkbox',...(empDoes(emp,d.key)?{checked:true}:{})})}));
+  const type=el('select',{},el('option',{value:'FULL_TIME',...(emp.employmentType==='FULL_TIME'?{selected:true}:{})},'Temps plein'),el('option',{value:'PART_TIME',...(emp.employmentType!=='FULL_TIME'?{selected:true}:{})},'Temps partiel'));
+  const nf=(v,mn,mx)=>el('input',{type:'number',value:v,min:mn??0,max:mx??168});
+  const minH=nf(emp.minHoursPerWeek??0),maxH=nf(emp.maxHoursPerWeek??40),days=nf(emp.maxDaysPerWeek??5,1,7),minS=nf(emp.minShiftHours??3,1,24),maxS=nf(emp.maxShiftHours??8,1,24),rest=nf(emp.minRestHours??10,0,24);
+  const rate=el('input',{type:'number',value:emp.hourlyRate??'',min:0,step:0.25,placeholder:'ex. 18.50'});
+  const av=availEditor(emp);
+  const content=el('div',{},
+    el('div',{class:'grid2'},el('label',{class:'field'},'Prénom',fn),el('label',{class:'field'},'Nom',ln)),
+    el('div',{class:'row',style:'margin-top:10px'},el('label',{class:'field'},'Rang (1 = priorité max)',rank),el('label',{class:'field'},'Type',type),el('label',{class:'check',style:'margin-bottom:8px'},active,'Actif')),
+    el('div',{class:'panel',style:'margin-top:12px;background:#fafbfc'},el('div',{class:'small muted',style:'margin-bottom:6px'},'Départements (coche ceux que l’employé peut faire)'),el('div',{class:'row'},...deptChecks.map(c=>el('label',{class:'check'},c.input,c.d.name)))),
+    el('div',{class:'grid3',style:'margin-top:12px'},el('label',{class:'field'},'Heures min/sem.',minH),el('label',{class:'field'},'Heures max/sem.',maxH),el('label',{class:'field'},'Jours max/sem.',days)),
+    el('div',{class:'grid3',style:'margin-top:10px'},el('label',{class:'field'},'Quart min (h)',minS),el('label',{class:'field'},'Quart max (h)',maxS),el('label',{class:'field'},'Repos min (h)',rest)),
+    el('div',{class:'grid3',style:'margin-top:10px'},el('label',{class:'field'},'Taux horaire ($/h)',rate)),
+    el('div',{class:'panel',style:'margin-top:12px'},el('h2',{},'Disponibilités'),av.node));
+  modal(isNew?'Nouvel employé':emp.firstName+' '+emp.lastName,content,(close)=>{
+    if(!fn.value.trim()||!ln.value.trim())throw new Error('Prénom et nom requis.');
+    if(!deptChecks.some(c=>c.input.checked))throw new Error('Choisis au moins un département.');
+    const data={firstName:fn.value.trim(),lastName:ln.value.trim(),rank:Number(rank.value),active:active.checked,employmentType:type.value,
+      minHoursPerWeek:+minH.value,maxHoursPerWeek:+maxH.value,minShiftHours:+minS.value,maxShiftHours:+maxS.value,minRestHours:+rest.value,maxDaysPerWeek:+days.value,
+      hourlyRate:(rate.value===''?null:+rate.value),availability:av.get()};
+    for(const c of deptChecks)data['does'+cap(c.d.key)]=c.input.checked;
+    if(isNew){data.id=uid();state.employees.push(data);}else Object.assign(emp,data);
+    save();toast('Employé enregistré.');close();route();});
+}
+function viewEmployees(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},'Employés'),el('p',{},state.employees.length+' employé(s), regroupés par département et triés par prénom. Le rang détermine la priorité.')),
+    el('button',{class:'primary',onClick:()=>editEmployee({},true)},'+ Nouvel employé')));
+  const GROUPS=[
+    {key:'kitchen',name:'Cuisine',match:e=>e.doesKitchen},
+    {key:'service',name:'Service',match:e=>e.doesService||e.doesHotesse}, // Hôtesse regroupée avec Service
+    {key:'plonge',name:'Plonge',match:e=>e.doesPlonge},
+  ];
+  const mkRow=(e)=>{const avDays=Object.keys(e.availability||{}).length;
+    return el('tr',{},el('td',{},el('strong',{},String(e.rank))),el('td',{},e.firstName+' '+e.lastName+(e.active===false?' (inactif)':'')),el('td',{},deptTagEmp(e)),
+      el('td',{class:'small'},e.employmentType==='FULL_TIME'?'Temps plein':'Temps partiel'),el('td',{class:'small pill-hours'},e.minHoursPerWeek+'–'+e.maxHoursPerWeek+' h'),el('td',{class:'small'},avDays+'/7 j'),
+      el('td',{class:'right'},el('button',{class:'sm',onClick:()=>editEmployee(e,false)},'Modifier'),' ',
+        el('button',{class:'sm danger',onClick:()=>{if(confirm('Supprimer '+e.firstName+' '+e.lastName+' ?')){state.employees=state.employees.filter(x=>x.id!==e.id);save();route();}}},'Suppr.')));};
+  for(const g of GROUPS){
+    const list=state.employees.filter(g.match).sort((a,b)=>a.firstName.localeCompare(b.firstName,'fr'));
+    const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Rang'),el('th',{},'Nom'),el('th',{},'Départements'),el('th',{},'Type'),el('th',{},'Heures/sem.'),el('th',{},'Dispo.'),el('th',{},''))));
+    const tb=el('tbody',{});
+    if(!list.length)tb.appendChild(el('tr',{},el('td',{colspan:7,class:'muted small'},'Aucun employé dans ce département.')));
+    else for(const e of list)tb.appendChild(mkRow(e));
+    t.appendChild(tb);
+    root.appendChild(el('div',{class:'panel'},el('h2',{},el('span',{class:'tag '+g.key},g.name),el('span',{class:'muted small',style:'margin-left:8px'},list.length+' employé(s)')),t));
+  }
+  return root;}
 
-    const note = document.getElementById('rtNote');
-    if (!currentSheet.sufficient){
-      note.style.display = '';
-      note.className = 'status warn';
-      note.textContent = 'Seul l\'excédent de la caisse peut être pris en comptant. Reste dû (non pris) : ' + money(currentSheet.shortfall) + '.';
-    } else {
-      note.style.display = 'none';
+// ---- Vue : Heures d'ouverture ----------------------------------------------
+function viewHours(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},"Heures d'ouverture"),el('p',{},'Modifie les heures puis enregistre. « Fermé » retire le jour.'))));
+  for(const dept of DEPTS){
+    const rows=[];const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Jour'),el('th',{},'Fermé'),el('th',{},'Ouverture'),el('th',{},'Fermeture'))));
+    const tb=el('tbody',{});
+    for(const d of DOW_ORDER){const oh=state.openingHours[dept.key][d]||{closed:false,open:660,close:1320};
+      const closed=el('input',{type:'checkbox',...(oh.closed?{checked:true}:{})});
+      const open=el('input',{type:'time',value:minutesToHHMM(oh.open)});const close=el('input',{type:'time',value:minutesToHHMM(Math.min(oh.close,1439))});
+      tb.appendChild(el('tr',{},el('td',{},el('strong',{},DOW[d])),el('td',{},closed),el('td',{},open),el('td',{},close)));
+      rows.push({d,closed,open,close});}
+    t.appendChild(tb);
+    const both=el('input',{type:'checkbox'});
+    const panel=el('div',{class:'panel'},el('h2',{},el('span',{class:'tag '+dept.key},dept.name)),t,
+      el('div',{class:'row',style:'margin-top:12px'},el('label',{class:'check'},both,'Appliquer aussi aux autres départements'),el('div',{class:'spacer'}),
+        el('button',{class:'primary',onClick:()=>{
+          for(const r of rows){const v={closed:r.closed.checked,open:hhmmToMin(r.open.value),close:hhmmToMin(r.close.value)};
+            state.openingHours[dept.key][r.d]=v;if(both.checked){for(const o of DEPTS)if(o.key!==dept.key)state.openingHours[o.key][r.d]={...v};}}
+          save();toast('Heures enregistrées.');route();}},'Enregistrer')));
+    root.appendChild(panel);}
+  return root;}
+
+// ---- Vue : Couverture ------------------------------------------------------
+function viewCoverage(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},'Besoins de couverture'),el('p',{},'Choisis un département : une ligne par jour (Lundi → Dimanche), créneaux de 30 min en colonnes. Crée une version à date d’effet pour un changement futur.'))));
+  // Colonnes = créneaux de 30 min dans la plage d'ouverture.
+  let mn=1440,mx=0;for(const dept of DEPTS)for(let d=0;d<7;d++){const oh=state.openingHours[dept.key][d];if(oh&&!oh.closed){mn=Math.min(mn,oh.open);mx=Math.max(mx,oh.close);}}
+  if(mn>=mx){mn=8*60;mx=23*60;}
+  mn=Math.floor(mn/30)*30;mx=Math.ceil(mx/30)*30;
+  const slots=[];for(let t=mn;t<mx;t+=30)slots.push(t);
+  let selId=state.coverageVersions[0].id, selDept=DEPTS[0].key;
+  {const t=todayStr();let best=state.coverageVersions[0];for(const v of state.coverageVersions)if(v.effectiveFrom<=t&&v.effectiveFrom>=best.effectiveFrom)best=v;selId=best.id;}
+  const body=el('div',{});
+  let inputs={};
+  const version=()=>state.coverageVersions.find(v=>v.id===selId)||state.coverageVersions[0];
+  const dName=()=>DEPTS.find(d=>d.key===selDept).name;
+  function saveCov(){const v=version();v.coverage[selDept]=v.coverage[selDept]||{};
+    for(const dow of DOW_ORDER){const hrs={};for(const t of slots){const inp=inputs[dow]&&inputs[dow][t];if(inp){const val=Number(inp.value)||0;if(val>0)hrs[t]=val;}}v.coverage[selDept][dow]=hrs;}
+    save();toast('Couverture enregistrée pour '+dName()+'.');}
+  function addCoverageVersion(){
+    const date=el('input',{type:'date',value:todayStr()});const label=el('input',{placeholder:'ex. Horaire d’hiver'});
+    const content=el('div',{},el('p',{class:'muted small'},'La nouvelle version reprend les besoins actuellement en vigueur à cette date (tu pourras les modifier). Elle s’applique automatiquement aux horaires générés à partir de cette date.'),
+      el('div',{class:'row'},el('label',{class:'field'},'À partir de (date d’effet)',date),el('label',{class:'field'},'Nom (optionnel)',label)));
+    modal('Nouvelle version des besoins',content,(close)=>{
+      if(!date.value)throw new Error('Choisis une date.');
+      if(state.coverageVersions.some(v=>v.effectiveFrom===date.value))throw new Error('Une version existe déjà à cette date.');
+      const clone=JSON.parse(JSON.stringify(coverageForDate(date.value)));
+      const nv={id:uid(),effectiveFrom:date.value,label:label.value.trim()||('Version dès '+date.value),coverage:clone};
+      state.coverageVersions.push(nv);state.coverageVersions.sort((a,b)=>a.effectiveFrom.localeCompare(b.effectiveFrom));
+      selId=nv.id;save();toast('Version créée.');close();render();},'Créer');
+  }
+  function render(){clear(body);const v=version();inputs={};
+    const deptSel=el('select',{},...DEPTS.map(d=>el('option',{value:d.key,...(d.key===selDept?{selected:true}:{})},d.name)));
+    deptSel.addEventListener('change',()=>{selDept=deptSel.value;render();});
+    const verSel=el('select',{},...state.coverageVersions.map(x=>el('option',{value:x.id,...(x.id===selId?{selected:true}:{})},x.label+' — dès '+x.effectiveFrom)));
+    verSel.addEventListener('change',()=>{selId=verSel.value;render();});
+    const controls=el('div',{class:'row',style:'margin-bottom:10px'},
+      el('label',{class:'field'},'Département',deptSel),el('label',{class:'field'},'Version (date d’effet)',verSel),el('div',{class:'spacer'}),
+      el('button',{onClick:addCoverageVersion},'+ Nouvelle version (date d’effet)'),
+      v.id!=='base'?el('button',{class:'danger',onClick:()=>{if(confirm('Supprimer la version « '+v.label+' » ?')){state.coverageVersions=state.coverageVersions.filter(x=>x.id!==v.id);selId=state.coverageVersions[0].id;save();render();}}},'Supprimer'):null);
+    body.appendChild(controls);
+    body.appendChild(el('div',{class:'small muted',style:'margin-bottom:10px'},'Tu modifies « '+v.label+' » (dès '+v.effectiveFrom+') pour '+dName()+'. Mets 0 pour les créneaux sans besoin ; les créneaux (30 min) hors ouverture sont masqués. Astuce : mets 2 sur un créneau de changement de quart pour un chevauchement de 30 min.'));
+    const thead=el('tr',{},el('th',{},'Jour'));for(const t of slots)thead.appendChild(el('th',{},minutesToHHMM(t)));
+    const tb=el('tbody',{});
+    for(const dow of DOW_ORDER){inputs[dow]={};const oh=state.openingHours[selDept][dow];const open=(oh&&!oh.closed);
+      const cur=(v.coverage[selDept]&&v.coverage[selDept][dow])||{};
+      const tr=el('tr',{},el('td',{},el('strong',{},DOW[dow]),!open?el('span',{class:'muted small'},' (fermé)'):''));
+      for(const t of slots){if(open&&t>=oh.open&&t<oh.close){const inp=el('input',{type:'number',min:0,max:20,value:cur[t]||0});inputs[dow][t]=inp;tr.appendChild(el('td',{},inp));}else tr.appendChild(el('td',{},''));}
+      tb.appendChild(tr);}
+    body.appendChild(el('div',{class:'row',style:'margin-bottom:10px'},el('div',{class:'spacer'}),el('button',{class:'primary',onClick:saveCov},'Enregistrer')));
+    body.appendChild(el('div',{class:'panel'},el('h2',{},el('span',{class:'tag '+selDept},dName())),el('div',{class:'cov-grid'},el('table',{},el('thead',{},thead),tb))));
+  }
+  render();root.appendChild(body);return root;}
+
+// ---- Vue : Congés ----------------------------------------------------------
+function empName(id){const e=state.employees.find(x=>x.id===id);return e?e.firstName+' '+e.lastName:'?';}
+function nbDays(a,b){return Math.round((new Date((b||a)+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/86400000)+1;}
+function addTimeOff(){
+  const sel=el('select',{},...[...state.employees].sort((a,b)=>a.rank-b.rank).map(e=>el('option',{value:e.id},e.firstName+' '+e.lastName)));
+  const start=el('input',{type:'date',value:todayStr()});
+  const end=el('input',{type:'date',value:todayStr()});
+  // La date de fin suit la date de début par défaut ; modifiable pour une absence prolongée.
+  start.addEventListener('change',()=>{if(!end.value||end.value<start.value)end.value=start.value;});
+  const reason=el('input',{placeholder:'ex. vacances, maladie… (optionnel)'});
+  const content=el('div',{},
+    el('label',{class:'field'},'Employé',sel),
+    el('div',{class:'row',style:'margin-top:10px'},el('label',{class:'field'},'Du (début)',start),el('label',{class:'field'},'Au (fin)',end)),
+    el('p',{class:'muted small'},'La date de fin est la même que le début par défaut. Change-la si l’employé est absent plusieurs jours (ex. une semaine complète).'),
+    el('label',{class:'field',style:'margin-top:6px'},'Motif',reason));
+  modal('Nouvelle demande de congé',content,(close)=>{
+    if(!sel.value)throw new Error('Choisis un employé.');
+    const s=start.value,e=end.value||start.value;
+    if(!s)throw new Error('Date de début requise.');
+    if(e<s)throw new Error('La date de fin doit être après le début.');
+    state.timeOff.push({id:uid(),employeeId:sel.value,start:s,end:e,reason:reason.value.trim()||null});
+    save();toast('Congé ajouté.');close();route();});
+}
+// Normalise un nom (minuscules, sans accents, espaces compactés) pour l'appariement.
+function normName(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();}
+// Différences d'orthographe connues entre Presto et l'application (Presto -> app).
+const CONGE_ALIAS={'djefline numa':'djefline nouma','gabriella di':'gabriella dee'};
+function findEmpByName(name){const key0=normName(name);const key=CONGE_ALIAS[key0]||key0;
+  for(const e of state.employees){if(normName(e.firstName+' '+e.lastName)===key)return e;}
+  // repli : match sur prénom+nom inversé ou nom de famille seul si unique
+  for(const e of state.employees){if(normName(e.lastName+' '+e.firstName)===key)return e;}
+  return null;}
+// Importe (fusionne) des congés approuvés collés depuis Presto. N'écrase jamais les données existantes.
+// Import unifié depuis Presto : accepte l'ancien format (tableau de congés) OU un objet
+// { conges:[...], taux:[...], disponibilites:[...] }. Fusionne chaque section, sans rien écraser d'autre.
+function importFromPresto(){
+  const ta=el('textarea',{style:'width:100%;height:150px;box-sizing:border-box;font-family:monospace;font-size:12px',placeholder:'Colle ici ce que le favori « Importer ⟵ Presto » a copié (depuis Requests et/ou Team).'});
+  const content=el('div',{},
+    el('p',{class:'muted small'},'Un seul bouton pour tout Presto. Colle le contenu copié par le favori — congés approuvés, taux horaires (et postes), et disponibilités approuvées si présentes. Fusion seulement : rien n’est remplacé sauf le taux horaire mis à jour. Lance le favori sur la page Requests (congés) puis sur la page Team (taux) et colle chacun.'),
+    ta);
+  modal('Importer de Presto',content,(close)=>{
+    let payload;try{payload=JSON.parse(ta.value);}catch(e){throw new Error('JSON invalide — recopie depuis le favori Presto.');}
+    let conges=[],taux=[],dispos=[];
+    if(Array.isArray(payload))conges=payload; // rétro-compatible : ancien favori congés
+    else{conges=payload.conges||[];taux=payload.taux||[];dispos=payload.disponibilites||payload.dispos||[];}
+    if(!conges.length&&!taux.length&&!dispos.length)throw new Error('Rien à importer dans ce contenu.');
+    const existing=state.timeOff||[];const has=(id,s,e)=>existing.some(c=>c.employeeId===id&&c.start===s&&(c.end||c.start)===e);
+    let addC=0,dupC=0,updR=0,updD=0;const unmatched=[];
+    for(const it of conges){const s0=(it.status||'').toString().toLowerCase();if(s0&&s0!=='approved'&&s0!=='approuvé'&&s0!=='approuve')continue;
+      const emp=findEmpByName(it.name);if(!emp){if(unmatched.indexOf(it.name)<0)unmatched.push(it.name);continue;}
+      const s=it.start,e=it.end||it.start;if(!s)continue;if(has(emp.id,s,e)){dupC++;continue;}
+      state.timeOff.push({id:uid(),employeeId:emp.id,start:s,end:e,reason:(it.reason||'Congé approuvé (Presto)')});addC++;}
+    for(const it of taux){const emp=findEmpByName(it.name);if(!emp){if(unmatched.indexOf(it.name)<0)unmatched.push(it.name);continue;}
+      if(it.rate!=null&&it.rate!==''){emp.hourlyRate=+it.rate;updR++;}}
+    for(const it of dispos){const emp=findEmpByName(it.name);if(!emp){if(unmatched.indexOf(it.name)<0)unmatched.push(it.name);continue;}
+      if(it.dow!=null&&it.start!=null&&it.end!=null){emp.availability=emp.availability||{};emp.availability[it.dow]=[{start:it.start,end:it.end}];updD++;}}
+    save();
+    const parts=[];if(addC||dupC)parts.push(addC+' congé(s) ajouté(s)'+(dupC?' ('+dupC+' doublon)':''));if(updR)parts.push(updR+' taux horaire(s) mis à jour');if(updD)parts.push(updD+' disponibilité(s) mise(s) à jour');
+    let msg=parts.length?parts.join(' · '):'Rien de nouveau à importer';
+    if(unmatched.length)msg+=' — non reconnus : '+unmatched.join(', ');
+    toast(msg,unmatched.length>0);close();route();});
+}
+function viewTimeOff(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},'Congés'),el('p',{},'Journées planifiées où l’employé ne sera pas présent. Le moteur ne l’assignera pas ces jours-là.')),
+    el('div',{class:'row'},el('button',{onClick:importFromPresto},'📥 Importer de Presto'),el('button',{class:'primary',onClick:addTimeOff},'+ Ajouter un congé'))));
+  const list=[...(state.timeOff||[])].sort((a,b)=>a.start.localeCompare(b.start));
+  if(!list.length){root.appendChild(el('div',{class:'panel muted'},'Aucun congé planifié. Clique « + Ajouter un congé ».'));return root;}
+  const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Employé'),el('th',{},'Du'),el('th',{},'Au'),el('th',{},'Jours'),el('th',{},'Motif'),el('th',{},''))));
+  const tb=el('tbody',{});
+  for(const c of list)tb.appendChild(el('tr',{},el('td',{},empName(c.employeeId)),el('td',{},c.start),el('td',{},c.end||c.start),
+    el('td',{},String(nbDays(c.start,c.end))),el('td',{class:'small muted'},c.reason||'—'),
+    el('td',{class:'right'},el('button',{class:'sm danger',onClick:()=>{state.timeOff=state.timeOff.filter(x=>x.id!==c.id);save();route();}},'Suppr.'))));
+  t.appendChild(tb);root.appendChild(el('div',{class:'panel'},t));return root;}
+
+// ---- Vue : Disponibilités supplémentaires ----------------------------------
+function deptName(key){const d=DEPTS.find(x=>x.key===key);return d?d.name:key;}
+function addExtraAvail(){
+  const emps=[...state.employees].sort((a,b)=>a.rank-b.rank);
+  if(!emps.length)throw new Error('Ajoute d’abord des employés.');
+  const empSel=el('select',{},...emps.map(e=>el('option',{value:e.id},e.firstName+' '+e.lastName)));
+  const deptWrap=el('div',{});let deptGet=()=>null;
+  function renderDept(){const e=state.employees.find(x=>x.id===empSel.value);const keys=DEPTS.filter(d=>empDoes(e,d.key));clear(deptWrap);
+    if(keys.length<=1){const k=keys[0]||null;deptGet=()=>k?k.key:null;
+      deptWrap.appendChild(k?el('div',{class:'check'},el('span',{class:'tag '+k.key},k.name)):el('span',{class:'muted small'},'Aucun département — configure d’abord l’employé.'));}
+    else{const sel=el('select',{},...keys.map(d=>el('option',{value:d.key},d.name)));deptGet=()=>sel.value;deptWrap.appendChild(sel);}}
+  empSel.addEventListener('change',renderDept);
+  const rowsWrap=el('div',{});const rows=[];
+  function addRow(){const date=el('input',{type:'date',value:todayStr()});const start=el('input',{type:'time',value:'17:00'});const end=el('input',{type:'time',value:'21:00'});
+    const o={date,start,end};const row=el('div',{class:'row',style:'align-items:flex-end;gap:8px;margin:6px 0'},
+      el('label',{class:'field'},'Date',date),el('label',{class:'field'},'Heure début',start),el('label',{class:'field'},'Heure fin',end),
+      el('button',{class:'sm danger',onClick:()=>{const i=rows.indexOf(o);if(i>=0)rows.splice(i,1);row.remove();}},'✕'));
+    rows.push(o);rowsWrap.appendChild(row);}
+  addRow();
+  const content=el('div',{},
+    el('label',{class:'field'},'Employé',empSel),
+    el('div',{style:'margin-top:10px'},el('div',{class:'small muted',style:'margin-bottom:4px'},'Département'),deptWrap),
+    el('div',{class:'panel',style:'margin-top:12px;background:#fafbfc'},
+      el('div',{class:'row',style:'justify-content:space-between;align-items:center'},el('div',{class:'small muted'},'Disponibilités à ajouter'),el('button',{class:'sm',onClick:addRow},'+ Ajouter une ligne')),
+      rowsWrap),
+    el('p',{class:'muted small'},'Ces disponibilités ponctuelles s’ajoutent à la date précise, sans modifier la disponibilité de base de l’employé.'));
+  renderDept();
+  modal('Disponibilité supplémentaire',content,(close)=>{
+    if(!empSel.value)throw new Error('Choisis un employé.');
+    const dept=deptGet();if(!dept)throw new Error('Cet employé n’a aucun département.');
+    const toAdd=[];
+    for(const r of rows){if(!r.date.value)continue;const s=hhmmToMin(r.start.value),e=hhmmToMin(r.end.value);
+      if(e<=s)throw new Error('L’heure de fin doit être après le début ('+r.date.value+').');
+      toAdd.push({id:uid(),employeeId:empSel.value,department:dept,date:r.date.value,start:s,end:e});}
+    if(!toAdd.length)throw new Error('Ajoute au moins une disponibilité.');
+    state.extraAvail.push(...toAdd);save();toast(toAdd.length+' disponibilité(s) ajoutée(s).');close();route();},'Enregistrer');
+}
+function viewExtraAvail(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},'Disponibilités supplémentaires'),el('p',{},'Ajoute des disponibilités ponctuelles sans changer la disponibilité de base.')),
+    el('button',{class:'primary',onClick:()=>{try{addExtraAvail();}catch(e){toast(e.message,true);}}},'+ Ajouter')));
+  const list=[...(state.extraAvail||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
+  if(!list.length){root.appendChild(el('div',{class:'panel muted'},'Aucune disponibilité supplémentaire. Clique « + Ajouter ».'));return root;}
+  const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Employé'),el('th',{},'Département'),el('th',{},'Date'),el('th',{},'Début'),el('th',{},'Fin'),el('th',{},''))));
+  const tb=el('tbody',{});
+  for(const x of list)tb.appendChild(el('tr',{},el('td',{},empName(x.employeeId)),el('td',{},el('span',{class:'tag '+x.department},deptName(x.department))),
+    el('td',{},x.date),el('td',{},minutesToHHMM(x.start)),el('td',{},minutesToHHMM(x.end)),
+    el('td',{class:'right'},el('button',{class:'sm danger',onClick:()=>{state.extraAvail=state.extraAvail.filter(y=>y.id!==x.id);save();route();}},'Suppr.'))));
+  t.appendChild(tb);root.appendChild(el('div',{class:'panel'},t));return root;}
+
+// ---- Vue : Envois Presto (rapport de ce qui a été copié pour Presto) --------
+function posClass(p){return {SERVICE:'service',CUISINE:'kitchen',PLONGE:'plonge','HÔTESSE':'hotesse'}[p]||'service';}
+function copyBatchText(batch){const byWeek={};for(const s of batch.shifts){const wk=mondayOf(s.date);(byWeek[wk]=byWeek[wk]||[]).push(s);}
+  const lines=[];for(const wk of Object.keys(byWeek).sort()){lines.push('Semaine du '+wk);
+    for(const s of byWeek[wk].slice().sort((a,b)=>a.date.localeCompare(b.date))) lines.push('  '+DOW[dayOfWeek(s.date)]+' '+s.date+' · '+s.name+' · '+s.start+'-'+s.end+' · '+s.position);lines.push('');}
+  const txt=lines.join('\n');const done=()=>toast('Liste copiée.');
+  function fb(){const ta=el('textarea',{style:'position:fixed;left:-9999px'});ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();done();}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(fb);else fb();}
+function viewPrestoLog(){
+  const root=el('div',{});const log=state.prestoLog||[];
+  root.appendChild(el('div',{class:'page-head'},
+    el('div',{},el('h1',{},'Envois Presto'),el('p',{},'Quarts copiés pour Presto, par envoi et par semaine — utilise-les pour retrouver et retirer des quarts dans Presto.')),
+    log.length?el('button',{class:'danger',onClick:()=>{if(confirm('Effacer TOUT l’historique des envois ?')){state.prestoLog=[];save();route();}}},'Tout effacer'):null));
+  root.appendChild(el('div',{class:'warn-box'},'⚠ Ce rapport n’agit pas sur Presto : « Retirer » efface seulement la ligne de l’historique ici, pas le quart dans Presto. Sers-t’en comme référence pour supprimer les quarts toi-même dans Presto.'));
+  if(!log.length){root.appendChild(el('div',{class:'panel muted'},'Aucun envoi pour l’instant. L’historique se remplit à chaque clic sur « 📋 Copier pour Presto ».'));return root;}
+  for(const batch of log){
+    const byWeek={};for(const s of batch.shifts){const wk=mondayOf(s.date);(byWeek[wk]=byWeek[wk]||[]).push(s);}
+    const weeks=Object.keys(byWeek).sort();const panel=el('div',{class:'panel'});
+    panel.appendChild(el('div',{class:'row',style:'align-items:center;margin-bottom:6px'},
+      el('h2',{style:'margin:0'},'Envoi du '+batch.copiedAt),
+      el('span',{class:'muted small',style:'margin-left:8px'},batch.shifts.length+' quart(s) · '+weeks.length+' semaine(s)'),
+      el('div',{class:'spacer'}),
+      el('button',{class:'sm',onClick:()=>copyBatchText(batch)},'Copier la liste'),
+      el('button',{class:'sm danger',onClick:()=>{if(confirm('Retirer cet envoi de l’historique ?')){state.prestoLog=state.prestoLog.filter(x=>x.id!==batch.id);save();route();}}},'Retirer')));
+    for(const wk of weeks){
+      panel.appendChild(el('div',{class:'small',style:'font-weight:700;margin:10px 0 4px'},'Semaine du '+wk));
+      const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Jour'),el('th',{},'Date'),el('th',{},'Employé'),el('th',{},'Heure'),el('th',{},'Poste'))));
+      const tb=el('tbody',{});
+      for(const s of byWeek[wk].slice().sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name)))
+        tb.appendChild(el('tr',{},el('td',{},DOW[dayOfWeek(s.date)]),el('td',{},s.date),el('td',{},s.name),el('td',{class:'small'},s.start+' – '+s.end),el('td',{},el('span',{class:'tag '+posClass(s.position)},s.position))));
+      t.appendChild(tb);panel.appendChild(el('div',{class:'cov-grid'},t));
     }
-
-    const soirCount = currentSheet.servers.filter(s => !s.carryover).length;
-    if (soirCount > 1){
-      renderHoursPage();
-      switchScreen('heures');
-    } else {
-      computeOwed();
-      renderRetraitServers();
-      switchScreen('retrait');
-    }
+    root.appendChild(panel);
   }
+  return root;}
 
-  function backFromRetrait(){
-    closeKeypad();
-    const soirCount = currentSheet ? currentSheet.servers.filter(s => !s.carryover).length : 0;
-    switchScreen(soirCount > 1 ? 'heures' : 'etape3');
+// ---- Vue : Modèles de quarts récurrents ------------------------------------
+function editTemplate(tpl,isNew){
+  const label=el('input',{value:tpl.label||'',placeholder:'ex. Fermeture Service'});
+  const dsel=el('select',{},...DEPTS.map(d=>el('option',{value:d.key,...(d.key===(tpl.deptKey||'service')?{selected:true}:{})},d.name)));
+  const start=el('input',{type:'time',value:minutesToHHMM(tpl.start??660)}),end=el('input',{type:'time',value:minutesToHHMM(tpl.end??1320)});
+  const content=el('div',{},el('label',{class:'field'},'Nom du modèle',label),
+    el('div',{class:'row',style:'margin-top:10px'},el('label',{class:'field'},'Département',dsel),el('label',{class:'field'},'Début',start),el('label',{class:'field'},'Fin',end)));
+  modal(isNew?'Nouveau modèle':'Modifier le modèle',content,(close)=>{
+    if(!label.value.trim())throw new Error('Donne un nom au modèle.');
+    const s=hhmmToMin(start.value),e=hhmmToMin(end.value);if(!(e>s))throw new Error('La fin doit être après le début.');
+    const data={label:label.value.trim(),deptKey:dsel.value,start:s,end:e};
+    if(isNew){data.id=uid();state.shiftTemplates.push(data);}else Object.assign(tpl,data);
+    save();toast('Modèle enregistré.');close();route();});
+}
+function viewTemplates(){
+  const root=el('div',{});
+  root.appendChild(el('div',{class:'page-head'},el('div',{},el('h1',{},'Modèles de quarts'),el('p',{},'Blocs horaires réutilisables (ex. « Ouverture 11–16 »). Sers-t’en pour remplir un quart en un clic depuis l’horaire (« + quart » → Modèle).')),
+    el('button',{class:'primary',onClick:()=>editTemplate({},true)},'+ Nouveau modèle')));
+  const list=[...(state.shiftTemplates||[])];
+  if(!list.length){root.appendChild(el('div',{class:'panel muted'},'Aucun modèle. Clique « + Nouveau modèle » pour créer un bloc horaire réutilisable.'));return root;}
+  for(const dept of DEPTS){const rows=list.filter(t=>t.deptKey===dept.key).sort((a,b)=>a.start-b.start);if(!rows.length)continue;
+    const t=el('table',{},el('thead',{},el('tr',{},el('th',{},'Modèle'),el('th',{},'Heures'),el('th',{},'Durée'),el('th',{},''))));
+    const tb=el('tbody',{});
+    for(const tp of rows)tb.appendChild(el('tr',{},el('td',{},tp.label),el('td',{},minutesToHHMM(tp.start)+'–'+minutesToHHMM(tp.end)),el('td',{class:'small muted'},((tp.end-tp.start)/60).toFixed(((tp.end-tp.start)%60)?1:0)+' h'),
+      el('td',{class:'right'},el('button',{class:'sm',onClick:()=>editTemplate(tp,false)},'Modifier'),' ',
+        el('button',{class:'sm danger',onClick:()=>{if(confirm('Supprimer le modèle « '+tp.label+' » ?')){state.shiftTemplates=state.shiftTemplates.filter(x=>x.id!==tp.id);save();route();}}},'Suppr.'))));
+    t.appendChild(tb);
+    root.appendChild(el('div',{class:'panel'},el('h2',{},el('span',{class:'tag '+dept.key},dept.name)),t));
   }
+  return root;
+}
+// ---- Navigation ------------------------------------------------------------
+const ROUTES=[{id:'horaire',label:'Horaire',icon:'🗓️',render:viewSchedule},{id:'employes',label:'Employés',icon:'👥',render:viewEmployees},{id:'conges',label:'Congés',icon:'🌴',render:viewTimeOff},{id:'dispsupp',label:'Disp. supp.',icon:'➕',render:viewExtraAvail},{id:'modeles',label:'Modèles de quarts',icon:'🧩',render:viewTemplates},{id:'heures',label:"Heures d'ouverture",icon:'🕐',render:viewHours},{id:'couverture',label:'Couverture',icon:'📊',render:viewCoverage},{id:'envois',label:'Envois Presto',icon:'📤',render:viewPrestoLog}];
+const nav=document.getElementById('nav');
+for(const r of ROUTES)nav.appendChild(el('a',{href:'#'+r.id,'data-route':r.id},r.icon+'  '+r.label));
+function route(){const id=(location.hash||'#horaire').slice(1);const r=ROUTES.find(x=>x.id===id)||ROUTES[0];
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('data-route')===r.id));
+  const m=document.getElementById('main');clear(m);m.appendChild(r.render());}
+window.addEventListener('hashchange',route);
 
-  // Page 1 (à plusieurs) : saisie des heures
-  function renderHoursPage(){
-    document.getElementById('hPourboire').textContent = money(currentSheet.totalPourboire);
-    const wrap = document.getElementById('hoursServers');
-    wrap.innerHTML = '';
-    currentSheet.servers.forEach((s, i) => {
-      if (s.carryover) return;
-      const card = document.createElement('div');
-      card.className = 'card scard';
-      card.innerHTML = `
-        <div class="scard-row" style="border:none;padding:2px 0">
-          <span class="scard-name" style="margin:0">${escapeHtml(s.name)}</span>
-          <input class="miniqty" type="text" inputmode="none" readonly placeholder="0 h"
-                 data-mode="hours" data-role="hours" data-si="${i}" data-label="${escapeHtml(s.name)} — heures" onclick="openKeypad(this)">
-        </div>`;
-      wrap.appendChild(card);
-    });
-  }
+// ---- Export / Import / Reset ----------------------------------------------
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
+  const a=el('a',{href:url,download:'horaire-ia-donnees.json'});document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('Données exportées.');});
+document.getElementById('btnImport').addEventListener('click',()=>document.getElementById('fileImport').click());
+document.getElementById('fileImport').addEventListener('change',(ev)=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{state=normalize(JSON.parse(rd.result));save();toast('Données importées.');route();}catch(e){toast('Fichier invalide.',true);}};rd.readAsText(f);});
+document.getElementById('btnReset').addEventListener('click',()=>{if(confirm('Recharger les données de démonstration ? Tes modifications locales seront écrasées.'))resetDemo();});
 
-  function confirmHours(){
-    closeKeypad();
-    currentSheet.servers.forEach((s, i) => {
-      if (s.carryover){ s.hours = 0; return; }
-      const h = document.querySelector('#hoursServers [data-role="hours"][data-si="' + i + '"]');
-      s.hours = h ? parseMoney(h.value) : 0;
-    });
-    computeOwed();
-    renderRetraitServers();
-    switchScreen('retrait');
-  }
-
-  function formatH(n){ return (Math.round(n * 100) / 100).toLocaleString('fr-CA'); }
-
-  // Calcule le pourboire dû de chacun (soir = selon heures ; report du midi = reste fixe)
-  function computeOwed(){
-    const soirServers = currentSheet.servers.filter(s => !s.carryover);
-    if (soirServers.length > 1){
-      const w = soirServers.map(s => s.hours || 0);
-      const wsum = w.reduce((a, b) => a + b, 0);
-      const arr = splitAmount(currentSheet.totalPourboire, wsum > 0 ? w : soirServers.map(() => 1));
-      let j = 0;
-      currentSheet.servers.forEach(s => { if (!s.carryover) s.owed = arr[j++]; });
-    } else if (soirServers.length === 1){
-      soirServers[0].owed = currentSheet.totalPourboire;
-    }
-    currentSheet.servers.forEach(s => { if (s.carryover) s.owed = s.midiReste; });
-  }
-
-  // Page 2 : répartition — pourboire dû (calculé) + montant pris en comptant
-  function renderRetraitServers(){
-    const wrap = document.getElementById('rtServers');
-    wrap.innerHTML = '';
-    currentSheet.servers.forEach((s, i) => {
-      const card = document.createElement('div');
-      card.className = 'card scard' + (s.carryover ? ' scard-midi' : '');
-      const hoursTag = (!s.carryover && s.hours) ? ` <span class="scard-tag" style="background:var(--muted)">${formatH(s.hours)} h</span>` : '';
-      const owedLabel = s.carryover ? 'Pourboire du midi (reporté)' : 'Pourboire';
-      card.innerHTML = `
-        <div class="scard-name">${escapeHtml(s.name)}${s.carryover ? ' <span class="scard-tag">midi</span>' : ''}${hoursTag}</div>
-        <div class="scard-row"><span class="scard-l">${owedLabel}</span><b class="scard-owed" id="owed-${i}">0,00 $</b></div>
-        <div class="scard-row">
-          <span class="scard-l">Pris en comptant</span>
-          <input class="miniqty" type="text" inputmode="none" readonly placeholder="0,00 $"
-                 data-mode="money" data-nosign="1" data-role="taken" data-si="${i}" data-label="${escapeHtml(s.name)} — pris comptant" onclick="openKeypad(this)">
-        </div>
-        <div class="scard-row scard-reste"><span class="scard-l">Reste à payer</span><b id="reste-${i}">0,00 $</b></div>
-      `;
-      wrap.appendChild(card);
-    });
-    recomputeRetrait();
-  }
-
-  // Répartit un montant selon des poids, arrondi au cent, reste aux plus grands poids
-  function splitAmount(total, weights){
-    const cents = Math.round(total * 100);
-    const wsum = weights.reduce((a, b) => a + b, 0);
-    let allocated = 0;
-    const arr = weights.map(w => {
-      const c = wsum > 0 ? Math.floor(cents * w / wsum) : 0;
-      allocated += c;
-      return c;
-    });
-    let rem = cents - allocated;
-    const order = weights.map((w, i) => ({ w, i })).sort((a, b) => b.w - a.w);
-    let k = 0;
-    while (rem > 0 && order.length){ arr[order[k % order.length].i] += 1; rem--; k++; }
-    return arr.map(c => c / 100);
-  }
-
-  function recomputeRetrait(){
-    if (!currentSheet) return;
-    // Le pourboire dû (owed) est déjà calculé par computeOwed(). Ici : montant pris → reste.
-    let takenSum = 0;
-    currentSheet.servers.forEach((s, i) => {
-      const t = document.querySelector(`[data-role="taken"][data-si="${i}"]`);
-      s.taken = t ? parseMoney(t.value) : 0;
-      s.reste = Math.round((s.owed - s.taken) * 100) / 100;
-      takenSum += s.taken;
-      const owedEl = document.getElementById('owed-' + i);
-      const resteEl = document.getElementById('reste-' + i);
-      if (owedEl) owedEl.textContent = money(s.owed);
-      if (resteEl) resteEl.textContent = money(s.reste);
-    });
-    takenSum = Math.round(takenSum * 100) / 100;
-    currentSheet.takenSum = takenSum;
-    currentSheet.actualDepot = Math.max(0, Math.round((currentSheet.excedent - takenSum) * 100) / 100);
-    const sumEl = document.getElementById('rtTakenSum');
-    if (sumEl) sumEl.textContent = money(takenSum);
-
-    // Alerte si on prend plus que le maximum disponible
-    const overNote = document.getElementById('rtTakenNote');
-    if (overNote){
-      if (takenSum - currentSheet.cashTip > 0.005){
-        overNote.style.display = '';
-        overNote.textContent = '⚠ Le total pris (' + money(takenSum) + ') dépasse le maximum disponible (' + money(currentSheet.cashTip) + ').';
-      } else {
-        overNote.style.display = 'none';
-      }
-    }
-  }
-
-  // ---- Rapport final ----
-  function goRapport(){
-    renderRapport();
-    document.getElementById('rapportActions').innerHTML =
-      '<button class="btn-primary" style="margin-top:20px" onclick="confirmRapport()">Confirmer et enregistrer ✓</button>';
-    switchScreen('rapport');
-  }
-
-  function denomLines(arr){
-    const rows = (arr || []).filter(d => d.qty > 0)
-      .map(d => `<tr><td class="ra-q">${d.qty}</td><td class="ra-x">×</td><td class="ra-d">${d.label}</td><td class="ra-a">${money(d.amt)}</td></tr>`)
-      .join('');
-    return rows || '<tr><td colspan="4" class="ra-empty">Aucune coupure</td></tr>';
-  }
-
-  function buildReportHTML(s){
-    const recountOk = Math.abs((s.recountTotal || 0) - CAISSE_FLOAT) < 0.005;
-    const svc = s.service === 'midi' ? 'Midi' : 'Soir';
-
-    const midiLine = (s.midiRetour && s.midiRetour !== 0)
-      ? `<div class="ra-line"><span>Retour comptant du midi (retiré)</span><b>${money(s.midiRetour)}</b></div>` : '';
-    const depotVal = (s.actualDepot != null) ? s.actualDepot : s.depot;
-    const depotLine = (depotVal > 0)
-      ? `<div class="ra-line"><span>Dépôt à effectuer</span><b>${money(depotVal)}</b></div>` : '';
-
-    const serverRows = s.servers.map(sv => `
-      <tr>
-        <td class="ra-sv-n">${escapeHtml(sv.name)}${sv.carryover ? ' <span class="scard-tag">midi</span>' : ''}</td>
-        <td>${sv.carryover ? '—' : (sv.hours ? formatH(sv.hours) + ' h' : '—')}</td>
-        <td class="ra-a">${money(sv.owed || 0)}</td>
-        <td class="ra-a">${money(sv.taken || 0)}</td>
-        <td class="ra-a">${money(sv.reste || 0)}</td>
-      </tr>`).join('');
-
-    let notesHtml = '';
-    if (s.carryDecline){
-      const t = new Date(s.carryDecline.at);
-      const hh = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
-      notesHtml += `<div class="ra-note">Pourboire du midi de ${escapeHtml((s.carryDecline.servers || []).join(', '))} non payé en entier — confirmé par le serveur présent à ${hh}.</div>`;
-    }
-    if (Array.isArray(s.notes) && s.notes.length){
-      notesHtml += s.notes.map(n => `<div class="ra-note">${escapeHtml(n)}</div>`).join('');
-    }
-
-    return `
-      <div class="ra-doc">
-        <div class="ra-head">
-          <div class="ra-brand">KÜTO</div>
-          <div class="ra-ttl">Feuille de caisse — ${svc}<br><span>${formatDate(s.date)}</span></div>
-        </div>
-
-        <div class="ra-sec">
-          <div class="ra-h">Montant de la caisse complète</div>
-          <table class="ra-tbl">${denomLines(s.denoms)}</table>
-          <div class="ra-line ra-tot"><span>Total de la caisse</span><b>${money(s.caisseTotal)}</b></div>
-        </div>
-
-        <div class="ra-sec">
-          <div class="ra-h">Calcul du pourboire</div>
-          <div class="ra-line"><span>Caisse conservée</span><b>− ${money(CAISSE_FLOAT)}</b></div>
-          <div class="ra-line"><span>Retour comptant</span><b>${money(s.retourEntered)}</b></div>
-          ${midiLine}
-          <div class="ra-line ra-tot"><span>Total pourboire</span><b>${money(s.totalPourboire)}</b></div>
-          ${depotLine}
-        </div>
-
-        <div class="ra-sec">
-          <div class="ra-h">Recompte de la caisse (200 $)</div>
-          <table class="ra-tbl">${denomLines(s.recountDenoms)}</table>
-          <div class="ra-line ra-tot"><span>Total recompté</span><b class="${recountOk ? 'ra-ok' : 'ra-bad'}">${money(s.recountTotal || 0)} ${recountOk ? '✓' : '✗'}</b></div>
-        </div>
-
-        <div class="ra-sec">
-          <div class="ra-h">Répartition des pourboires</div>
-          <table class="ra-tbl ra-srv">
-            <tr class="ra-sv-head"><th>Serveur</th><th>Heures</th><th>Pourboire</th><th>Pris</th><th>Reste</th></tr>
-            ${serverRows}
-          </table>
-        </div>
-        ${notesHtml}
-      </div>
-    `;
-  }
-
-  function renderRapport(){
-    currentSheet.recountDenoms = captureDenoms('recount');
-    currentSheet.recountTotal = recalcKey('recount');
-    document.getElementById('rapportBody').innerHTML = buildReportHTML(currentSheet);
-  }
-
-  // ---- Administration : consultation des feuilles ----
-  function openHistory(){ renderHistory(); switchScreen('history'); }
-
-  function renderHistory(){
-    const sheets = getSheets().slice().sort((a, b) => (b.date + b.service).localeCompare(a.date + a.service));
-    const byDate = {};
-    sheets.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s); });
-    const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
-    const wrap = document.getElementById('historyList');
-    if (!dates.length){ wrap.innerHTML = '<div class="empty-hint">Aucune feuille enregistrée pour l\'instant.</div>'; return; }
-    wrap.innerHTML = dates.map(d => {
-      const rows = byDate[d].map(s => {
-        const label = s.service === 'midi' ? 'Midi' : 'Soir';
-        return `<div class="hist-row">
-          <span class="hist-svc">${label} · ${money(s.totalPourboire)}</span>
-          <span class="hist-acts">
-            <button type="button" class="hist-view" onclick="viewSheet('${s.id}')">Consulter</button>
-            <button type="button" class="hist-del" onclick="askDeleteSheet('${s.id}')">Supprimer</button>
-          </span>
-        </div>`;
-      }).join('');
-      return `<div class="card hist-card"><div class="hist-date">${formatDate(d)}</div>${rows}</div>`;
-    }).join('');
-  }
-
-  let viewedSheetId = null;
-  function viewSheet(id){
-    const s = getSheets().find(x => x.id === id);
-    if (!s) return;
-    viewedSheetId = id;
-    document.getElementById('sheetViewBody').innerHTML = buildReportHTML(s);
-    switchScreen('sheetView');
-  }
-
-  // ---- Suppression d'une feuille (admin) ----
-  let pendingDeleteId = null;
-  function askDeleteSheet(id){
-    pendingDeleteId = id || viewedSheetId;
-    document.getElementById('deleteModal').classList.add('show');
-  }
-  function closeDelete(){
-    document.getElementById('deleteModal').classList.remove('show');
-    const m = document.getElementById('delErr'); if (m) m.textContent = '';
-  }
-  function delFail(txt){
-    let m = document.getElementById('delErr');
-    if (!m){
-      m = document.createElement('div'); m.id = 'delErr'; m.className = 'pw-err'; m.style.marginTop = '10px';
-      const mb = document.querySelector('#deleteModal .modal-btns');
-      mb.parentNode.insertBefore(m, mb);
-    }
-    m.textContent = txt;
-  }
-  async function doDeleteSheet(){
-    if (!pendingDeleteId){ closeDelete(); return; }
-    const id = pendingDeleteId;
-    const btn = document.getElementById('delConfirmBtn');
-    if (btn){ btn.disabled = true; btn.textContent = 'Suppression…'; }
-    try {
-      if (!adminTok){ delFail('Connexion admin absente — ferme, touche ⚙ et reconnecte-toi en admin.'); return; }
-      let res;
-      try {
-        res = await fetch('/api/sheets/' + encodeURIComponent(id), { method: 'DELETE', headers: { 'x-admin-token': adminTok } });
-      } catch(net){
-        delFail('Pas de connexion au serveur. Réessaie dans un instant.');
-        return;
-      }
-      if (res.status === 401){ delFail('Connexion admin expirée — ferme, touche ⚙, reconnecte-toi, puis réessaie.'); return; }
-      if (!res.ok){ delFail('Erreur du serveur (code ' + res.status + '). Réessaie.'); return; }
-      await syncPull();  // recharge la liste réelle depuis le serveur
-      if (getSheets().some(s => s.id === id)){
-        delFail('Le serveur a répondu OK mais la feuille est toujours là. Copie-moi ce message.');
-        return;
-      }
-      pendingDeleteId = null;
-      closeDelete();
-      renderHistory();
-    } finally {
-      if (btn){ btn.disabled = false; btn.textContent = 'Supprimer'; }
-    }
-  }
-
-  // ---- Envoi par courriel (ouvre l'app courriel de l'appareil) ----
-  function mailto(subject, body){
-    window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  }
-  function sheetToText(s){
-    const svc = s.service === 'midi' ? 'Midi' : 'Soir';
-    const L = [];
-    L.push('KÜTO — Feuille de caisse ' + svc + ' — ' + formatDate(s.date));
-    L.push('');
-    L.push('Total de la caisse : ' + money(s.caisseTotal));
-    L.push('Retour comptant : ' + money(s.retourEntered));
-    if (s.midiRetour) L.push('Retour comptant du midi (retiré) : ' + money(s.midiRetour));
-    L.push('Total pourboire : ' + money(s.totalPourboire));
-    const depotVal = (s.actualDepot != null) ? s.actualDepot : s.depot;
-    if (depotVal > 0) L.push('Dépôt à effectuer : ' + money(depotVal));
-    const rok = Math.abs((s.recountTotal || 0) - CAISSE_FLOAT) < 0.005;
-    L.push('Recompte : ' + money(s.recountTotal || 0) + (rok ? ' (OK)' : ' (écart)'));
-    L.push('');
-    L.push('Répartition des pourboires :');
-    s.servers.forEach(sv => {
-      L.push('- ' + sv.name + (sv.carryover ? ' (midi)' : '') + ' : dû ' + money(sv.owed || 0) + ', pris ' + money(sv.taken || 0) + ', reste ' + money(sv.reste || 0));
-    });
-    if (s.carryDecline) L.push('Note : pourboire du midi de ' + (s.carryDecline.servers || []).join(', ') + ' non payé en entier (confirmé).');
-    if (Array.isArray(s.notes)) s.notes.forEach(n => L.push('Note : ' + n));
-    return L.join('\n');
-  }
-  function emailSheet(){
-    const s = getSheets().find(x => x.id === viewedSheetId);
-    if (!s) return;
-    mailto('KÜTO — Caisse ' + (s.service === 'midi' ? 'midi' : 'soir') + ' ' + s.date, sheetToText(s));
-  }
-
-  function unpaidToText(byServer, title){
-    const names = Object.keys(byServer).sort();
-    const L = ['KÜTO — ' + title, ''];
-    let grand = 0;
-    if (!names.length){ L.push('Aucun pourboire non payé.'); return L.join('\n'); }
-    names.forEach(n => {
-      const g = byServer[n]; grand += g.total;
-      L.push(n + ' : ' + money(g.total));
-      g.entries.sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
-        L.push('   ' + formatDate(e.date) + ' — ' + (e.service === 'midi' ? 'Midi' : 'Soir') + ' : ' + money(e.amount));
-      });
-    });
-    L.push(''); L.push('Total : ' + money(grand));
-    return L.join('\n');
-  }
-  function emailWeekly(){
-    const { start, end } = weekRange(weekOffset);
-    const by = aggregateUnpaid(getSheets().filter(s => s.date >= start && s.date <= end), null);
-    mailto('KÜTO — Pourboires non payés (semaine)', unpaidToText(by, 'Pourboires non payés — du ' + formatDate(start) + ' au ' + formatDate(end)));
-  }
-  function emailCustom(){
-    const start = document.getElementById('custStart').value;
-    const end = document.getElementById('custEnd').value;
-    const checked = Array.from(document.querySelectorAll('#custServers input:checked')).map(i => i.value);
-    const allowed = checked.length ? new Set(checked) : null;
-    const by = aggregateUnpaid(getSheets().filter(s => (!start || s.date >= start) && (!end || s.date <= end)), allowed);
-    mailto('KÜTO — Pourboires non payés', unpaidToText(by, 'Pourboires non payés — du ' + formatDate(start) + ' au ' + formatDate(end)));
-  }
-
-  // ---- Administration : rapport hebdomadaire des pourboires non payés ----
-  let weekOffset = 0;
-
-  function openWeekly(){ weekOffset = 0; renderWeekly(); switchScreen('weekly'); }
-  function changeWeek(delta){ weekOffset += delta; renderWeekly(); }
-
-  function isoOf(d){
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-  function weekRange(offset){
-    const now = new Date();
-    const dow = (now.getDay() + 6) % 7; // 0 = lundi
-    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow + offset * 7);
-    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
-    return { start: isoOf(monday), end: isoOf(sunday) };
-  }
-
-  function aggregateUnpaid(sheetsArr, allowedNames){
-    const byServer = {};
-    sheetsArr.forEach(s => {
-      (s.servers || []).forEach(sv => {
-        // On ne compte que l'origine (non-report) : le reste y est tenu à jour
-        if (!sv.carryover && (sv.reste || 0) > 0.005 && (!allowedNames || allowedNames.has(sv.name))){
-          const k = sv.name;
-          byServer[k] = byServer[k] || { entries: [], total: 0 };
-          byServer[k].entries.push({ date: s.date, service: s.service, amount: sv.reste });
-          byServer[k].total += sv.reste;
-        }
-      });
-    });
-    return byServer;
-  }
-
-  function renderUnpaidInto(byServer, wrap, totalLabel){
-    const names = Object.keys(byServer).sort();
-    if (!names.length){
-      wrap.innerHTML = '<div class="status ok" style="text-align:center">Aucun pourboire non payé pour cette sélection. ✓</div>';
-      return;
-    }
-    let grand = 0;
-    wrap.innerHTML = names.map(n => {
-      const g = byServer[n];
-      grand += g.total;
-      const rows = g.entries
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map(e => `<div class="wk-line"><span>${formatDate(e.date)} — ${e.service === 'midi' ? 'Midi' : 'Soir'}</span><b>${money(e.amount)}</b></div>`)
-        .join('');
-      return `<div class="card wk-card"><div class="wk-name">${escapeHtml(n)}<span class="wk-total">${money(g.total)}</span></div>${rows}</div>`;
-    }).join('') +
-      `<div class="total-box" style="margin-top:16px"><span class="t">${totalLabel || 'Total non payé'}</span><span class="v">${money(grand)}</span></div>`;
-  }
-
-  function renderWeekly(){
-    const { start, end } = weekRange(weekOffset);
-    document.getElementById('weekLabel').textContent = 'Du ' + formatDate(start) + ' au ' + formatDate(end);
-    const inWeek = getSheets().filter(s => s.date >= start && s.date <= end);
-    renderUnpaidInto(aggregateUnpaid(inWeek, null), document.getElementById('weeklyBody'), 'Total non payé (semaine)');
-  }
-
-  // ---- Rapport personnalisé : serveurs + plage de dates ----
-  function openCustom(){
-    const today = isoOf(new Date());
-    const wk = weekRange(0);
-    document.getElementById('custStart').value = wk.start;
-    document.getElementById('custEnd').value = today;
-    const box = document.getElementById('custServers');
-    box.innerHTML = roster.length
-      ? roster.map(r => `<label class="cust-srv"><input type="checkbox" value="${escapeHtml(r.name)}" checked> <span>${escapeHtml(r.name)}</span></label>`).join('')
-      : '<div class="empty-hint">Aucun serveur enregistré.</div>';
-    document.getElementById('customBody').innerHTML = '';
-    switchScreen('custom');
-  }
-
-  function generateCustom(){
-    const start = document.getElementById('custStart').value;
-    const end = document.getElementById('custEnd').value;
-    const checked = Array.from(document.querySelectorAll('#custServers input:checked')).map(i => i.value);
-    const allowed = checked.length ? new Set(checked) : null;
-    const inRange = getSheets().filter(s => (!start || s.date >= start) && (!end || s.date <= end));
-    renderUnpaidInto(aggregateUnpaid(inRange, allowed), document.getElementById('customBody'), 'Total non payé (période)');
-  }
-
-  async function confirmRapport(){
-    renderRapport();  // fige les dernières valeurs (recompte)
-    if (!currentSheet.id) currentSheet.id = 'S' + new Date().getTime();
-    currentSheet.savedAt = new Date().toISOString();
-    const midiUpdated = applyCarryoverPayments();   // reporter les paiements sur la feuille du midi
-    try {
-      if (midiUpdated) await api('/api/sheets', { method: 'POST', body: midiUpdated });
-      await api('/api/sheets', { method: 'POST', body: currentSheet });
-      const sheets = getSheets();
-      const i = sheets.findIndex(s => s.id === currentSheet.id);
-      if (i >= 0) sheets[i] = currentSheet; else sheets.push(currentSheet);
-      saveSheets(sheets);
-      document.getElementById('rapportActions').innerHTML =
-        '<div class="status ok" style="text-align:center">✓ Feuille enregistrée dans le cloud.</div>' +
-        '<button class="btn-primary" style="margin-top:14px" onclick="newSheet()">Terminer</button>';
-    } catch(e){
-      document.getElementById('rapportActions').innerHTML =
-        '<div class="status warn" style="text-align:center">⚠ Enregistrement impossible (connexion ?).</div>' +
-        '<button class="btn-primary" style="margin-top:14px" onclick="confirmRapport()">Réessayer</button>';
-    }
-  }
-
-  // Reporte les montants payés le soir sur la feuille du midi (réduit le reste + ajoute une note)
-  function applyCarryoverPayments(){
-    const paid = currentSheet.servers.filter(s => s.carryover && s.taken > 0.005);
-    if (!paid.length || !midiSheetForShift) return null;
-    const midi = midiSheetForShift;
-    midi.notes = midi.notes || [];
-    paid.forEach(cs => {
-      const ms = (midi.servers || []).find(m => m.id === cs.id || m.name === cs.name);
-      if (ms) ms.reste = Math.max(0, Math.round((ms.reste - cs.taken) * 100) / 100);
-      midi.notes.push(money(cs.taken) + ' du pourboire du midi de ' + cs.name + ' payé le soir du ' + formatDate(currentSheet.date) + '.');
-    });
-    try {
-      const sheets = getSheets();
-      const i = sheets.findIndex(s => s.id === midi.id);
-      if (i >= 0){ sheets[i] = midi; saveSheets(sheets); }
-    } catch(e){}
-    return midi;
-  }
-
-  function newSheet(){ location.reload(); }
-
-  // ---- Confirmation du retrait, puis recompte ----
-  function askWithdraw(){
-    // Règle : payer d'abord le serveur du midi reporté.
-    // S'il reste dû alors qu'il y avait assez d'argent → confirmation horodatée.
-    const unpaid = currentSheet.servers.filter(s => s.carryover
-      && (s.owed - s.taken) > 0.005
-      && currentSheet.excedent + 0.005 >= s.owed);
-    if (unpaid.length){
-      const list = unpaid.map(s => `${escapeHtml(s.name)} (reste ${money(s.owed - s.taken)})`).join(', ');
-      document.getElementById('carryConfirmText').innerHTML =
-        'Le pourboire du midi de <b>' + list + '</b> n\'est pas payé en entier, alors qu\'il y a assez d\'argent dans la caisse. Confirmes-tu de ne pas le payer davantage ?';
-      currentSheet._pendingUnpaid = unpaid.map(s => s.name);
-      document.getElementById('carryModal').classList.add('show');
-      return;
-    }
-    showWithdrawModal();
-  }
-  function closeCarry(){ document.getElementById('carryModal').classList.remove('show'); }
-  function confirmCarryDecline(){
-    currentSheet.carryDecline = { at: new Date().toISOString(), servers: currentSheet._pendingUnpaid || [] };
-    document.getElementById('carryModal').classList.remove('show');
-    showWithdrawModal();
-  }
-  function showWithdrawModal(){
-    document.getElementById('withdrawAmt').textContent = money(currentSheet.takenSum || 0);
-    document.getElementById('withdrawModal').classList.add('show');
-  }
-  function closeWithdraw(){ document.getElementById('withdrawModal').classList.remove('show'); }
-  function confirmWithdraw(){
-    closeWithdraw();
-    currentSheet.withdrawn = true;
-    document.getElementById('ctxDateR').textContent = document.getElementById('ctxDate').textContent;
-    document.getElementById('ctxServiceR').textContent = document.getElementById('ctxService').textContent;
-    recalcRecount();
-    switchScreen('recompte');
-  }
-
-  // ---- Démarrage ----
-  boot();
+// ============================================================================
+//  Synchronisation serveur (version web hébergée) — données partagées + login.
+//  En version fichier local (sans serveur), tout retombe sur localStorage.
+// ============================================================================
+let _saveTimer=null,_serverOK=false;
+function serverSave(){
+  if(!_serverOK)return; // pas de serveur (fichier local) → localStorage seulement
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}).then(r=>{if(r.status===401)showLogin();}).catch(()=>{});},600);
+}
+function showLogin(){
+  if(document.getElementById('ait-login'))return;
+  const ov=document.createElement('div');ov.id='ait-login';
+  ov.style.cssText='position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:2147483647';
+  ov.innerHTML='<div style="background:#fff;border-radius:12px;padding:26px 24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:sans-serif"><div style="font-size:20px;font-weight:700;margin-bottom:4px">AI-TIMING</div><div style="color:#64748b;font-size:13px;margin-bottom:16px">Entre le mot de passe pour accéder à l’horaire.</div><input id="ait-pw" type="password" placeholder="Mot de passe" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px"/><div id="ait-err" style="color:#dc2626;font-size:12px;height:16px;margin:6px 0"></div><button id="ait-go" style="width:100%;background:#4f46e5;color:#fff;border:0;padding:11px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer">Entrer</button></div>';
+  document.body.appendChild(ov);
+  const pw=document.getElementById('ait-pw'),err=document.getElementById('ait-err');pw.focus();
+  const go=()=>{err.textContent='';fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})}).then(r=>{if(r.ok){ov.remove();boot();}else{err.textContent='Mot de passe incorrect.';pw.value='';pw.focus();}}).catch(()=>{err.textContent='Erreur de connexion.';});};
+  document.getElementById('ait-go').onclick=go;pw.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+}
+async function boot(){
+  // Détecte la présence d'un serveur : si /api/me répond, on est en mode web.
+  let me;try{me=await fetch('/api/me').then(r=>r.ok?r.json():null);}catch(e){me=null;}
+  if(!me){_serverOK=false;route();return;} // pas de serveur → mode fichier local (localStorage)
+  _serverOK=true;
+  if(!me.authed){showLogin();return;}
+  try{
+    const res=await fetch('/api/state');
+    if(res.status===401){showLogin();return;}
+    const data=await res.json();
+    if(data&&Object.keys(data).length&&!data.__empty){state=normalize(data);}
+    else{await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});} // 1re fois : on pousse l'état courant
+  }catch(e){}
+  route();
+}
+boot();
 </script>
 </body>
 </html>
