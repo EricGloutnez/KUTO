@@ -776,7 +776,7 @@
     <div class="confirm-q">Est-ce que le dépôt a été retiré&nbsp;?</div>
     <div class="confirm-total">Montant : <b id="depotModalAmt">0,00 $</b></div>
     <div class="confirm-total" style="margin-top:6px;color:var(--muted);font-size:13px">
-      « Oui » : le dépôt est sorti, non reporté au soir. « Non » : conservé dans la caisse, inclus au pourboire du soir.
+      « Oui » : le dépôt est sorti. « Non » : conservé dans la caisse.
     </div>
     <div class="modal-btns">
       <button type="button" onclick="answerDepot(false)">Non</button>
@@ -1561,8 +1561,8 @@
       note.style.display = '';
       note.className = 'status ' + (retire ? 'ok' : 'warn');
       note.textContent = retire
-        ? 'Dépôt de ' + amt + ' retiré — non reporté à la caisse du soir.'
-        : 'Dépôt de ' + amt + ' conservé dans la caisse — inclus au pourboire du soir.';
+        ? 'Dépôt de ' + amt + ' retiré.'
+        : 'Dépôt de ' + amt + ' conservé dans la caisse.';
     }
   }
 
