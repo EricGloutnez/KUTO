@@ -1897,21 +1897,22 @@
   }
 
   // ---- Rapport final ----
-  // Soir : la caisse doit avoir bougé depuis le premier comptage.
-  // Si le recompte = premier comptage, rien n'a été retiré (pourboire + dépôt) → enregistrement interdit.
+  // Soir : la caisse DOIT être exactement à 200,00 $ au recompte, sinon enregistrement interdit.
+  // (Sur le midi, c'est permis : l'argent peut rester pour le soir.)
   function soirRecountBlocksSave(){
-    if (service !== 'soir') return false;                 // permis sur le midi
-    if (caisseTotal <= CAISSE_FLOAT + 0.005) return false; // rien à retirer : cas légitime
+    if (service !== 'soir') return false;                    // permis sur le midi
     const rt = recalcKey('recount');
-    return Math.abs(rt - caisseTotal) < 0.005;             // recompte = premier comptage → rien retiré
+    return Math.abs(rt - CAISSE_FLOAT) >= 0.005;             // pas à 200,00 $ → bloqué
   }
 
   function goRapport(){
     if (soirRecountBlocksSave()){
+      const rt = recalcKey('recount');
+      const diff = Math.round((rt - CAISSE_FLOAT) * 100) / 100;
       const st = document.getElementById('recountStatus');
       st.className = 'status warn';
-      st.textContent = '⛔ Le total recompté égale le premier comptage (' + money(caisseTotal)
-        + '). Le pourboire et le dépôt n\'ont pas été retirés — la caisse du soir doit revenir à 200,00 $ avant d\'enregistrer.';
+      st.textContent = '⛔ La caisse du soir doit être exactement à 200,00 $ pour enregistrer. Total recompté : '
+        + money(rt) + ' (' + (diff > 0 ? 'surplus de ' : 'manque de ') + money(Math.abs(diff)) + '). Corrige la caisse.';
       return;
     }
     renderRapport();
@@ -2232,7 +2233,7 @@
   async function confirmRapport(){
     if (soirRecountBlocksSave()){
       document.getElementById('rapportActions').innerHTML =
-        '<div class="status warn" style="text-align:center">⛔ Enregistrement refusé : la caisse du soir est encore au total du premier comptage. Retire le pourboire et le dépôt (retour à 200,00 $), puis recompte.</div>' +
+        '<div class="status warn" style="text-align:center">⛔ Enregistrement refusé : la caisse du soir doit être exactement à 200,00 $. Corrige la caisse, puis recompte.</div>' +
         '<button class="btn-primary" style="margin-top:14px" onclick="switchScreen(\'recompte\')">Retour au recompte</button>';
       return;
     }
