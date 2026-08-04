@@ -368,6 +368,24 @@
   .kp-grid button:active { background: #e2e2dd; }
   .kp-grid button.kp-act { background: var(--accent-soft); color: var(--accent); font-size: 26px; }
   .kp-grid button.kp-ok { background: var(--ink); color: #fff; font-size: 22px; font-weight: 800; }
+  .kp-roll {
+    font-family: inherit; font-size: 15px; font-weight: 800; color: #fff;
+    background: var(--ink); border: none; border-radius: 12px; padding: 10px 16px; cursor: pointer;
+  }
+  .kp-roll:active { opacity: .85; }
+  .roll-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+  .roll-row .roll-lbl { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .roll-row .roll-lbl small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .roll-step { display: flex; align-items: center; gap: 12px; }
+  .roll-step button {
+    width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--ink);
+    background: #fff; font-size: 24px; font-weight: 800; color: var(--ink); cursor: pointer; line-height: 1;
+  }
+  .roll-step button:active { background: #f1f1ee; }
+  .roll-step .roll-c { font-size: 22px; font-weight: 800; min-width: 34px; text-align: center; }
+  .rollbadge { color: var(--accent); font-weight: 800; font-size: 13px; }
+  #rollModal { z-index: 300; }   /* au-dessus du clavier (z-index 200) */
+  #rollModal .modal-card { max-width: 420px; }
 </style>
 </head>
 <body>
@@ -460,7 +478,8 @@
         <button type="button" onclick="changePin()">Changer</button>
       </div>
       <div class="add-row" style="margin-top:12px">
-        <input type="password" id="newAdminPw" placeholder="Nouveau mot de passe admin" autocomplete="off">
+        <input type="text" id="newAdminPw" inputmode="none" readonly placeholder="Nouveau code admin (chiffres)"
+               autocomplete="off" data-mode="pin" data-label="Nouveau code admin" onclick="openKeypad(this)">
         <button type="button" onclick="changeAdminPw()">Changer</button>
       </div>
       <div id="secMsg" class="pw-err" style="min-height:18px"></div>
@@ -623,6 +642,8 @@
       <span class="v" id="r3Depot">0,00 $</span>
     </div>
 
+    <div id="r3MidiDepotNote" class="status ok" style="display:none;margin-top:14px"></div>
+
     <div id="r3Status" class="status ok"></div>
 
     <div class="total-box" id="r3CashBox" style="margin-top:14px;background:var(--accent)">
@@ -768,6 +789,37 @@
   </div>
 </div>
 
+<!-- ===================== MODAL ROULEAUX ===================== -->
+<div id="rollModal" class="modal">
+  <div class="modal-card">
+    <div class="confirm-q">Rouleaux</div>
+    <div class="confirm-total" style="color:var(--muted);font-size:13px;margin-bottom:6px">
+      Entre le nombre de rouleaux par dénomination. Ajouté au total, sans changer le nombre compté.
+    </div>
+    <div id="rollRows"></div>
+    <div class="confirm-total" id="rollTotal" style="margin-top:14px;font-weight:800">= 0 pièces · 0,00 $</div>
+    <div class="modal-btns">
+      <button type="button" onclick="closeRoll()">Annuler</button>
+      <button type="button" class="primary" onclick="confirmRoll()">Ajouter au comptage</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL DÉPÔT DU MIDI ===================== -->
+<div id="depotModal" class="modal">
+  <div class="modal-card">
+    <div class="confirm-q">Est-ce que le dépôt a été retiré&nbsp;?</div>
+    <div class="confirm-total">Montant : <b id="depotModalAmt">0,00 $</b></div>
+    <div class="confirm-total" style="margin-top:6px;color:var(--muted);font-size:13px">
+      « Oui » : le dépôt est sorti. « Non » : conservé dans la caisse.
+    </div>
+    <div class="modal-btns">
+      <button type="button" onclick="answerDepot(false)">Non</button>
+      <button type="button" class="primary" onclick="answerDepot(true)">Oui</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== MODAL CONFIRMATION RETRAIT ===================== -->
 <div id="withdrawModal" class="modal">
   <div class="modal-card">
@@ -795,10 +847,23 @@
 <!-- ===================== MODAL MOT DE PASSE ===================== -->
 <div id="pwModal" class="modal">
   <div class="modal-card">
-    <div class="label">Accès administrateur</div>
-    <input type="password" id="pwInput" placeholder="Mot de passe" autocomplete="off"
-           onkeydown="if(event.key==='Enter'){checkPw();}">
-    <div id="pwError" class="pw-err"></div>
+    <div class="label" style="text-align:center;font-weight:800;font-size:17px">Accès administrateur</div>
+    <div class="pin-dots" id="pwDots" style="text-align:center;letter-spacing:10px;min-height:34px;margin:12px 0">—</div>
+    <div id="pwError" class="pw-err" style="text-align:center"></div>
+    <div class="kp-grid pin-grid">
+      <button type="button" onclick="pwKey('1')">1</button>
+      <button type="button" onclick="pwKey('2')">2</button>
+      <button type="button" onclick="pwKey('3')">3</button>
+      <button type="button" onclick="pwKey('4')">4</button>
+      <button type="button" onclick="pwKey('5')">5</button>
+      <button type="button" onclick="pwKey('6')">6</button>
+      <button type="button" onclick="pwKey('7')">7</button>
+      <button type="button" onclick="pwKey('8')">8</button>
+      <button type="button" onclick="pwKey('9')">9</button>
+      <button type="button" class="kp-act" onclick="pwKey('clear')">C</button>
+      <button type="button" onclick="pwKey('0')">0</button>
+      <button type="button" class="kp-act" onclick="pwKey('del')">⌫</button>
+    </div>
     <div class="modal-btns">
       <button type="button" onclick="closePw()">Annuler</button>
       <button type="button" class="primary" onclick="checkPw()">Accéder</button>
@@ -811,6 +876,7 @@
   <div class="kp-head">
     <div class="kp-lbl" id="kpLabel">—</div>
     <div class="kp-head-btns">
+      <button type="button" id="kpRoll" class="kp-roll" onclick="openRollModal()" style="display:none">Rouleau</button>
       <button type="button" id="kpSign" class="kp-sign" onclick="keySign()">± négatif</button>
       <button type="button" class="kp-done" onclick="keyPress('del')">⌫</button>
     </div>
@@ -845,6 +911,22 @@
     { v: 50.00, label: "50,00 $" },
     { v: 100.00, label: "100,00 $" },
   ];
+
+  // Rouleaux (outil de calcul) : nombre de pièces par rouleau, seulement pour ces coupures.
+  function rollSizeFor(v){
+    const c = Math.round(v * 100);
+    if (c === 5)   return 40;   // 0,05 $
+    if (c === 10)  return 50;   // 0,10 $
+    if (c === 25)  return 40;   // 0,25 $
+    if (c === 100) return 25;   // 1,00 $
+    if (c === 200) return 25;   // 2,00 $
+    return 0;
+  }
+  function allowedRollDenoms(){
+    return DENOMS.map((d, i) => ({ i: i, v: d.v, label: d.label, size: rollSizeFor(d.v) }))
+                 .filter(x => x.size > 0);
+  }
+  let rollData = { main: {}, recount: {} };   // { clé: { indexCoupure: nombre de rouleaux } }
 
   let service = null;
   let roster = [];              // [{id, name}]
@@ -949,9 +1031,9 @@
   async function changeAdminPw(){
     const v = document.getElementById('newAdminPw').value || '';
     const msg = document.getElementById('secMsg');
-    if (v.length < 6){ msg.style.color = 'var(--accent)'; msg.textContent = 'Mot de passe ≥ 6 caractères.'; return; }
+    if (!/^\d{4,}$/.test(v)){ msg.style.color = 'var(--accent)'; msg.textContent = 'Code admin = au moins 4 chiffres.'; return; }
     try { await api('/api/admin/settings', { method: 'POST', admin: true, body: { adminPassword: v } });
-      msg.style.color = 'var(--ok)'; msg.textContent = 'Mot de passe admin changé.'; document.getElementById('newAdminPw').value = '';
+      msg.style.color = 'var(--ok)'; msg.textContent = 'Code admin changé.'; document.getElementById('newAdminPw').value = '';
     } catch(e){ msg.style.color = 'var(--accent)'; msg.textContent = 'Échec.'; }
   }
 
@@ -1155,16 +1237,27 @@
   }
 
   // ---- Paramètres (accès admin protégé côté serveur) ----
+  // ---- Connexion admin : gros clavier numérique ----
+  let pwBuf = '';
+  function pwKey(k){
+    if (k === 'del') pwBuf = pwBuf.slice(0, -1);
+    else if (k === 'clear') pwBuf = '';
+    else if (pwBuf.length < 12) pwBuf += k;
+    renderPwDots();
+  }
+  function renderPwDots(){
+    const el = document.getElementById('pwDots');
+    if (el) el.textContent = pwBuf.length ? '●'.repeat(pwBuf.length) : '—';
+  }
   function openSettings(){
-    const inp = document.getElementById('pwInput');
-    inp.value = '';
+    pwBuf = '';
+    renderPwDots();
     document.getElementById('pwError').textContent = '';
     document.getElementById('pwModal').classList.add('show');
-    setTimeout(() => inp.focus(), 100);
   }
-  function closePw(){ document.getElementById('pwModal').classList.remove('show'); }
+  function closePw(){ pwBuf = ''; renderPwDots(); document.getElementById('pwModal').classList.remove('show'); }
   async function checkPw(){
-    const v = document.getElementById('pwInput').value;
+    const v = pwBuf;
     try {
       const r = await api('/api/admin/login', { method: 'POST', body: { password: v } });
       adminTok = r.token;
@@ -1175,7 +1268,7 @@
       switchScreen('settings');
     } catch(e){
       document.getElementById('pwError').textContent = 'Mot de passe incorrect.';
-      document.getElementById('pwInput').value = '';
+      pwBuf = ''; renderPwDots();
     }
   }
   function closeSettings(){ switchScreen('accueil'); }
@@ -1216,10 +1309,14 @@
     document.getElementById('kpLabel').textContent =
       kpMode === 'money' ? lbl :
       kpMode === 'hours' ? ('Heures : ' + lbl) :
+      kpMode === 'pin' ? lbl :
       ('Coupure : ' + lbl);
-    document.getElementById('kpAlt').textContent = kpMode === 'int' ? 'C' : ',';
+    document.getElementById('kpAlt').textContent = (kpMode === 'int' || kpMode === 'pin') ? 'C' : ',';
     document.getElementById('kpSign').style.display =
       (kpMode === 'money' && inp.dataset.nosign !== '1') ? '' : 'none';
+    const rollBtn = document.getElementById('kpRoll');
+    if (rollBtn) rollBtn.style.display =
+      (kpMode === 'int' && (inp.dataset.key === 'main' || inp.dataset.key === 'recount')) ? '' : 'none';
     document.getElementById('keypad').classList.add('show');
     document.body.classList.add('keypad-open');
     setTimeout(() => inp.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
@@ -1264,6 +1361,15 @@
       else if (v.length < 5) v += k;
       activeInput.value = v;
       if (activeInput.dataset.key === 'recount') recalcRecount(); else recalc();
+      return;
+    }
+
+    if (kpMode === 'pin'){   // code numérique (mot de passe admin) : chiffres seulement
+      v = v.replace(/[^0-9]/g, '');
+      if (k === 'del') v = v.slice(0, -1);
+      else if (k === 'clear') v = '';
+      else if (/^[0-9]$/.test(k) && v.length < 12) v += k;
+      activeInput.value = v;
       return;
     }
 
@@ -1332,7 +1438,7 @@
       row.innerHTML = `
         <input class="qty" type="text" inputmode="none" readonly placeholder="0" data-key="${key}" data-i="${i}" data-label="${d.label}" onclick="openKeypad(this)">
         <span class="x">×</span>
-        <span class="den"><b>${d.label}</b> <span class="amt" id="${key}-amt-${i}"><span class="z">= 0,00 $</span></span></span>
+        <span class="den"><b>${d.label}</b> <span class="rollbadge" id="${key}-roll-${i}"></span> <span class="amt" id="${key}-amt-${i}"><span class="z">= 0,00 $</span></span></span>
       `;
       (d.v < 5 ? coins : bills).appendChild(row);
     });
@@ -1342,15 +1448,20 @@
 
   function recalcKey(key){
     let total = 0;
+    const rd = rollData[key] || {};
     DENOMS.forEach((d, i) => {
       const inp = document.querySelector(`.qty[data-key="${key}"][data-i="${i}"]`);
       if (!inp) return;
       let q = parseInt((inp.value || '').replace(/[^0-9]/g,''), 10);
       if (isNaN(q)) q = 0;
-      const amt = q * d.v;
+      const rolls = rd[i] || 0;
+      const eff = q + rolls * rollSizeFor(d.v);   // pièces comptées + pièces des rouleaux
+      const amt = eff * d.v;
       total += amt;
       const cell = document.getElementById(key + '-amt-' + i);
-      if (cell) cell.innerHTML = q > 0 ? '= ' + money(amt) : '<span class="z">= 0,00 $</span>';
+      if (cell) cell.innerHTML = eff > 0 ? '= ' + money(amt) : '<span class="z">= 0,00 $</span>';
+      const badge = document.getElementById(key + '-roll-' + i);
+      if (badge) badge.textContent = rolls > 0 ? '+' + rolls : '';   // nombre de rouleaux, en rouge
     });
     return total;
   }
@@ -1379,11 +1490,14 @@
 
   // ---- Détail des coupures (pour le rapport) ----
   function captureDenoms(key){
+    const rd = rollData[key] || {};
     return DENOMS.map((d, i) => {
       const inp = document.querySelector(`.qty[data-key="${key}"][data-i="${i}"]`);
       let q = parseInt(((inp && inp.value) || '').replace(/[^0-9]/g,''), 10);
       if (isNaN(q)) q = 0;
-      return { v: d.v, label: d.label, qty: q, amt: q * d.v };
+      const rolls = rd[i] || 0;
+      const eff = q + rolls * rollSizeFor(d.v);
+      return { v: d.v, label: d.label, qty: eff, loose: q, rolls: rolls, amt: eff * d.v };
     });
   }
 
@@ -1426,7 +1540,10 @@
       try { midiSheetForShift = await api('/api/sheets/find?date=' + encodeURIComponent(date) + '&service=midi'); }
       catch(e){ midiSheetForShift = findSavedSheet(date, 'midi'); }
     }
-    const midiRetour = (midiSheetForShift && midiSheetForShift.retourEntered) ? midiSheetForShift.retourEntered : 0;
+    let midiRetour = (midiSheetForShift && midiSheetForShift.retourEntered) ? midiSheetForShift.retourEntered : 0;
+    // Dépôt du midi retiré (réponse « Oui » sur la feuille du midi) → on ne le reporte plus au soir.
+    // S'il est conservé (« Non »), on le garde : il fait partie du pourboire à retirer le soir.
+    if (midiRetour > 0 && midiSheetForShift && midiSheetForShift.depotRetire === true) midiRetour = 0;
     const retour = retourEntered - midiRetour;         // retour comptant effectif
     const excedent = caisseTotal - CAISSE_FLOAT;
     const totalPourboire = excedent - retour;
@@ -1449,15 +1566,17 @@
     }
     document.getElementById('r3Pourboire').textContent = money(totalPourboire);
 
-    // Dépôt : dès qu'il y a un dépôt à faire (retour comptant effectif positif)
+    // Dépôt : sur le soir, on affiche « Dépôt à effectuer ». Sur le midi, c'est la modale qui gère.
     const depotAmount = retour > 0 ? retour : 0;
     const depotBox = document.getElementById('r3DepotBox');
-    if (depotAmount > 0){
+    if (depotAmount > 0 && service !== 'midi'){
       depotBox.style.display = 'flex';
       document.getElementById('r3Depot').textContent = money(depotAmount);
     } else {
       depotBox.style.display = 'none';
     }
+    const midiDepotNote = document.getElementById('r3MidiDepotNote');
+    if (midiDepotNote) midiDepotNote.style.display = 'none';
 
     // Suffisance : argent disponible = excédent (solde − 200)
     const available = excedent;
@@ -1480,6 +1599,7 @@
       sufficient: sufficient,
       shortfall: shortfall,
       midiSheetId: null,
+      depotRetire: null,   // midi : « Oui » (dépôt retiré) / « Non » (conservé pour le soir)
       servers: shiftServers.map(s => ({ id: s.id, name: s.name, hours: 0, owed: 0, taken: 0, reste: 0, carryover: false }))
     };
 
@@ -1505,6 +1625,9 @@
 
     updateStatusBanner();
     switchScreen('etape3');
+
+    // Feuille du midi avec un dépôt (retour comptant positif) : demander s'il a été retiré.
+    if (service === 'midi' && retour > 0){ openDepotModal(retour); }
   }
 
   // ---- Statut suffisant / insuffisant (étape 3) ----
@@ -1517,6 +1640,69 @@
       banner.className = 'status warn';
       banner.textContent = '⚠ Argent insuffisant — seul l\'excédent (' + money(currentSheet.available)
         + ') peut être pris · reste dû : ' + money(currentSheet.shortfall) + '.';
+    }
+  }
+
+  // ---- Modale « Rouleaux » : nombre de rouleaux par dénomination ----
+  let rollModalKey = 'main';
+  let rollModalCounts = {};
+  function openRollModal(){
+    if (!activeInput) return;
+    const key = activeInput.dataset.key;
+    if (key !== 'main' && key !== 'recount') return;
+    rollModalKey = key;
+    rollModalCounts = {};
+    const src = rollData[key] || {};
+    document.getElementById('rollRows').innerHTML = allowedRollDenoms().map(x => {
+      rollModalCounts[x.i] = src[x.i] || 0;
+      return `<div class="roll-row">
+        <span class="roll-lbl">${x.label} <small>${x.size} pièces / rouleau</small></span>
+        <div class="roll-step">
+          <button type="button" onclick="rollStep(${x.i}, -1)">−</button>
+          <span class="roll-c" id="rollc-${x.i}">${rollModalCounts[x.i]}</span>
+          <button type="button" onclick="rollStep(${x.i}, 1)">+</button>
+        </div>
+      </div>`;
+    }).join('');
+    updateRollTotal();
+    document.getElementById('rollModal').classList.add('show');
+  }
+  function rollStep(i, delta){
+    rollModalCounts[i] = Math.max(0, (rollModalCounts[i] || 0) + delta);
+    const el = document.getElementById('rollc-' + i);
+    if (el) el.textContent = rollModalCounts[i];
+    updateRollTotal();
+  }
+  function updateRollTotal(){
+    let pc = 0, amt = 0;
+    allowedRollDenoms().forEach(x => { const c = rollModalCounts[x.i] || 0; pc += c * x.size; amt += c * x.size * x.v; });
+    document.getElementById('rollTotal').textContent = '= ' + pc + ' pièces · ' + money(amt);
+  }
+  function closeRoll(){ document.getElementById('rollModal').classList.remove('show'); }
+  function confirmRoll(){
+    rollData[rollModalKey] = rollData[rollModalKey] || {};
+    allowedRollDenoms().forEach(x => { rollData[rollModalKey][x.i] = rollModalCounts[x.i] || 0; });
+    closeRoll();
+    if (rollModalKey === 'recount') recalcRecount(); else recalc();
+  }
+
+  // ---- Modale « dépôt retiré ? » (feuille du midi, retour comptant positif) ----
+  function openDepotModal(amount){
+    if (currentSheet) currentSheet.depotAmount = amount;
+    document.getElementById('depotModalAmt').textContent = money(amount);
+    document.getElementById('depotModal').classList.add('show');
+  }
+  function answerDepot(retire){
+    if (currentSheet) currentSheet.depotRetire = retire;
+    document.getElementById('depotModal').classList.remove('show');
+    const note = document.getElementById('r3MidiDepotNote');
+    if (note && currentSheet){
+      const amt = money(currentSheet.depotAmount || 0);
+      note.style.display = '';
+      note.className = 'status ' + (retire ? 'ok' : 'warn');
+      note.textContent = retire
+        ? 'Dépôt de ' + amt + ' retiré.'
+        : 'Dépôt de ' + amt + ' conservé dans la caisse.';
     }
   }
 

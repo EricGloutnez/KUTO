@@ -166,8 +166,8 @@ async function handleApi(req, res, pathname, query){
     const b = await readBody(req);
     const patch = {};
     if (b.pin && /^\d{4}$/.test(b.pin)) patch.pin = b.pin;
-    if (b.adminPassword && b.adminPassword.length >= 6) patch.admin_hash = hashPw(b.adminPassword);
-    if (!Object.keys(patch).length) return send(res, 400, { error: 'PIN 4 chiffres, mot de passe ≥ 6 caractères' });
+    if (b.adminPassword && /^\d{4,}$/.test(b.adminPassword)) patch.admin_hash = hashPw(b.adminPassword);
+    if (!Object.keys(patch).length) return send(res, 400, { error: 'NIP 4 chiffres, code admin ≥ 4 chiffres' });
     await store.setConfig(patch);
     return send(res, 200, { ok: true });
   }
