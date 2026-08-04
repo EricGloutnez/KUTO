@@ -1897,7 +1897,23 @@
   }
 
   // ---- Rapport final ----
+  // Soir : la caisse doit avoir bougé depuis le premier comptage.
+  // Si le recompte = premier comptage, rien n'a été retiré (pourboire + dépôt) → enregistrement interdit.
+  function soirRecountBlocksSave(){
+    if (service !== 'soir') return false;                 // permis sur le midi
+    if (caisseTotal <= CAISSE_FLOAT + 0.005) return false; // rien à retirer : cas légitime
+    const rt = recalcKey('recount');
+    return Math.abs(rt - caisseTotal) < 0.005;             // recompte = premier comptage → rien retiré
+  }
+
   function goRapport(){
+    if (soirRecountBlocksSave()){
+      const st = document.getElementById('recountStatus');
+      st.className = 'status warn';
+      st.textContent = '⛔ Le total recompté égale le premier comptage (' + money(caisseTotal)
+        + '). Le pourboire et le dépôt n\'ont pas été retirés — la caisse du soir doit revenir à 200,00 $ avant d\'enregistrer.';
+      return;
+    }
     renderRapport();
     document.getElementById('rapportActions').innerHTML =
       '<button class="btn-primary" style="margin-top:20px" onclick="confirmRapport()">Confirmer et enregistrer ✓</button>';
@@ -2214,6 +2230,12 @@
   }
 
   async function confirmRapport(){
+    if (soirRecountBlocksSave()){
+      document.getElementById('rapportActions').innerHTML =
+        '<div class="status warn" style="text-align:center">⛔ Enregistrement refusé : la caisse du soir est encore au total du premier comptage. Retire le pourboire et le dépôt (retour à 200,00 $), puis recompte.</div>' +
+        '<button class="btn-primary" style="margin-top:14px" onclick="switchScreen(\'recompte\')">Retour au recompte</button>';
+      return;
+    }
     renderRapport();  // fige les dernières valeurs (recompte)
     if (!currentSheet.id) currentSheet.id = 'S' + new Date().getTime();
     currentSheet.savedAt = new Date().toISOString();

@@ -256,7 +256,7 @@ async function handleApi(req, res, pathname, query){
     }
   }
 
-  if (pathname === '/api/health') return send(res, 200, { ok: true, build: 'slider-2026-08-04' });
+  if (pathname === '/api/health') return send(res, 200, { ok: true, build: 'blocksoir-2026-08-04' });
   return send(res, 404, { error: 'Route inconnue' });
 }
 
